@@ -1,0 +1,4 @@
+anytree
+networkx
+pandas
+pytest
