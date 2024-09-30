@@ -28,7 +28,7 @@ def with_extra_functions(graph: nx.MultiDiGraph):
         self.add_edge(u, v, tree=SeriesNode(e1_tree, e2_tree, w))
 
     def get_edge_tree(self, e) -> LeafNode:
-        return self.edges[e].get('tree', LeafNode(e))
+        return self.edges[e].get('tree', LeafNode(e[:2]))
 
     graph.get_sources = get_sources
     graph.get_sinks = get_sinks
