@@ -3,7 +3,7 @@ import math
 import networkx as nx
 
 from sp_graph import get_sp_decomposition_tree
-from tree import LeafNode, SeriesNode, ParallelNode, distribute_weights, distribute_deadline
+from tree import LeafNode, SeriesNode, ParallelNode, distribute_weights, distribute_deadline, PruneNode
 
 
 def test_leaf_node():
@@ -27,12 +27,34 @@ def test_series_node():
 def test_parallel_node():
     left_child = LeafNode(("Task1", "Task2"))
     right_child = LeafNode(("Task1", "Task2"))
-    node = ParallelNode(left_child, right_child, "Task2", "Task3")
+    node = ParallelNode(left_child, right_child, "Task1", "Task2")
 
     assert left_child in node.children and right_child in node.children
-    assert node.source == "Task2"
-    assert node.sink == "Task3"
+    assert node.source == "Task1"
+    assert node.sink == "Task2"
     assert node.name
+
+
+def test_prune_node():
+    leaf_node_1 = LeafNode(("Task1", "Task2"))
+    leaf_node_2 = LeafNode(("Task1", "Task2"))
+    leaf_node_3 = LeafNode(("Task2", "Task3"))
+    series_node = SeriesNode(leaf_node_1, leaf_node_3, "Task2")
+    parallel_node = ParallelNode(leaf_node_1, leaf_node_2, "Task1", "Task2")
+    leaf_node_1.weight = 1
+    series_node.weight = 2
+    series_node.deadline = 2
+    parallel_node.deadline = 3
+
+    post_leaf_node = PruneNode(leaf_node_1)
+    post_series_node = PruneNode(series_node)
+    post_parallel_node = PruneNode(parallel_node)
+
+    for previous_node, new_node in zip([leaf_node_1, series_node, parallel_node],
+                                       [post_leaf_node, post_series_node, post_parallel_node]):
+        assert previous_node.name != new_node.name
+        assert previous_node.weight == new_node.weight
+        assert previous_node.deadline == new_node.deadline
 
 
 def test_weights_distribution():
@@ -86,6 +108,7 @@ def test_deadline_distribution():
 
     for leaf in tree.leaves:
         assert math.isclose(expected_deadlines[leaf.edge], leaf.deadline, rel_tol=0, abs_tol=0.01)
+
 
 def create_non_trivial_sp_dag():
     return nx.DiGraph([('Task8', 'Task1'),

@@ -3,8 +3,9 @@ from collections import defaultdict
 import networkx as nx
 import pandas as pd
 
+from sp_graph import get_sp_decomposition_tree
 from spization import JavaFacadeSpIzationAlgorithm
-from tree import WeightDistributionVisitor, SPTreeNode
+from tree import distribute_weights, distribute_deadline
 
 
 class WorkflowDecompositionAlgorithm:
@@ -14,4 +15,6 @@ class WorkflowDecompositionAlgorithm:
     def decompose(self, workflow: nx.DiGraph, time_matrix: pd.DataFrame, deadline: float, max_subgraph_size: int):
         sp_workflow = JavaFacadeSpIzationAlgorithm().run(workflow)
         vertex_weights: dict = time_matrix.mean(axis=1).to_dict(defaultdict(float))
+        tree = get_sp_decomposition_tree(sp_workflow)
         distribute_weights(tree, vertex_weights)
+        distribute_deadline(tree, deadline)

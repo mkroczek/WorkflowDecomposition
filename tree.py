@@ -1,5 +1,6 @@
 import uuid
 from abc import abstractmethod, ABC
+from collections.abc import Callable
 
 from anytree import Node, PostOrderIter, PreOrderIter
 
@@ -48,6 +49,24 @@ class LeafNode(SPTreeNode):
 
     def accept(self, visitor):
         visitor.visit_leaf_node(self)
+
+
+class PruneNode(SPTreeNode):
+    def __init__(self, node_to_override: SPTreeNode):
+        super().__init__()
+        self.weight = node_to_override.weight
+        self.deadline = node_to_override.deadline
+
+    def accept(self, visitor):
+        pass
+
+    @staticmethod
+    def replace_in_tree(node: SPTreeNode):
+        parent = node.parent
+        node.parent = None
+        prune_node = PruneNode(node)
+        prune_node.parent = parent
+        return prune_node
 
 
 class SPTreeVisitor(ABC):
@@ -109,3 +128,59 @@ def distribute_deadline(tree: SPTreeNode, deadline: float):
     visitor: DeadlineDistributionVisitor = DeadlineDistributionVisitor(deadlines)
     for node in PreOrderIter(tree):
         node.accept(visitor)
+
+
+class PruneTreeVisitor(SPTreeVisitor):
+    def __init__(self, prune_predicate: Callable, predicate_not_satisfied_action: Callable = None):
+        self.prune_predicate = prune_predicate
+        self.predicate_not_satisfied_action: Callable = predicate_not_satisfied_action
+        if not self.predicate_not_satisfied_action:
+            self.predicate_not_satisfied_action = self._default_predicate_not_satisfied_action
+
+    def _default_predicate_not_satisfied_action(self):
+        raise ValueError("Required prune tree predicate couldn't be satisfied")
+
+    def visit_composition_node(self, node: CompositionNode):
+        if self.prune_predicate(node):
+            PruneNode.replace_in_tree(node)
+        else:
+            for child in node.children:
+                child.accept(self)
+
+    def visit_series_node(self, node: SeriesNode):
+        self.visit_composition_node(node)
+
+    def visit_parallel_node(self, node: ParallelNode):
+        self.visit_composition_node(node)
+
+    def visit_leaf_node(self, node: LeafNode):
+        if self.prune_predicate(node):
+            PruneNode.replace_in_tree(node)
+        else:
+            self.predicate_not_satisfied_action()
+
+
+def prune_tree(tree: SPTreeNode, prune_predicate: Callable,
+               predicate_not_satisfied_action: Callable = None) -> SPTreeNode:
+    if prune_predicate(tree):
+        return PruneNode(tree)
+    visitor = PruneTreeVisitor(prune_predicate, predicate_not_satisfied_action)
+    tree.accept(visitor)
+    return tree
+
+
+def prune_tree_by_max_subgraph_size(tree: SPTreeNode, max_subgraph_size: int):
+    if max_subgraph_size < 2:
+        raise ValueError("Max subgraph size must be grater than 1")
+
+    def max_subgraph_size_predicate(node: SPTreeNode):
+        raise NotImplementedError()
+
+    def max_subgraph_size_not_satisfied_action():
+        raise ValueError("Required prune tree predicate couldn't be satisfied")
+
+    prune_tree(
+        tree,
+        max_subgraph_size_predicate,
+        max_subgraph_size_not_satisfied_action
+    )
