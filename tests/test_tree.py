@@ -12,6 +12,9 @@ def test_leaf_node():
 
     assert node.edge == edge
     assert node.name
+    assert set(node.get_graph_nodes()) == set(edge)
+    assert node.get_graph_source() == "Task1"
+    assert node.get_graph_sink() == "Task2"
 
 
 def test_series_node():
@@ -22,6 +25,11 @@ def test_series_node():
     assert left_child in node.children and right_child in node.children
     assert node.connecting_node == "Task2"
     assert node.name
+    assert set(node.get_graph_nodes()) == {"Task1", "Task2", "Task3"}
+    assert node.get_graph_source() == "Task1"
+    assert node.get_graph_sink() == "Task3"
+    assert node.get_left_child() == left_child
+    assert node.get_right_child() == right_child
 
 
 def test_parallel_node():
@@ -33,6 +41,9 @@ def test_parallel_node():
     assert node.source == "Task1"
     assert node.sink == "Task2"
     assert node.name
+    assert set(node.get_graph_nodes()) == {"Task1", "Task2"}
+    assert node.get_graph_source() == "Task1"
+    assert node.get_graph_sink() == "Task2"
 
 
 def test_prune_node():
@@ -55,6 +66,9 @@ def test_prune_node():
         assert previous_node.name != new_node.name
         assert previous_node.weight == new_node.weight
         assert previous_node.deadline == new_node.deadline
+        assert previous_node.get_graph_nodes() == new_node.get_graph_nodes()
+        assert previous_node.get_graph_source() == new_node.get_graph_source()
+        assert previous_node.get_graph_sink() == new_node.get_graph_sink()
 
 
 def test_weights_distribution():

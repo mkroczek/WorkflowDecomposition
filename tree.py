@@ -12,6 +12,18 @@ class SPTreeNode(Node, ABC):
         self.deadline: float = None
 
     @abstractmethod
+    def get_graph_nodes(self):
+        pass
+
+    @abstractmethod
+    def get_graph_source(self):
+        pass
+
+    @abstractmethod
+    def get_graph_sink(self):
+        pass
+
+    @abstractmethod
     def accept(self, visitor):
         pass
 
@@ -19,14 +31,30 @@ class SPTreeNode(Node, ABC):
 class CompositionNode(SPTreeNode, ABC):
     def __init__(self, left_child=None, right_child=None):
         super().__init__(children=[left_child, right_child])
-        self.left_child: SPTreeNode = left_child
-        self.right_child: SPTreeNode = right_child
+        self.graph_nodes = set().union(*map(lambda c: c.get_graph_nodes(), self.children))
+
+    def get_graph_nodes(self):
+        return self.graph_nodes
 
 
 class SeriesNode(CompositionNode):
     def __init__(self, left_child, right_child, connecting_node):
         super().__init__(left_child, right_child)
         self.connecting_node = connecting_node
+        self.graph_source = left_child.get_graph_source()
+        self.graph_sink = right_child.get_graph_sink()
+
+    def get_graph_source(self):
+        return self.graph_source
+
+    def get_graph_sink(self):
+        return self.graph_sink
+
+    def get_left_child(self):
+        return [c for c in self.children if c.get_graph_sink() == self.connecting_node][0]
+
+    def get_right_child(self):
+        return [c for c in self.children if c.get_graph_source() == self.connecting_node][0]
 
     def accept(self, visitor):
         visitor.visit_series_node(self)
@@ -38,6 +66,12 @@ class ParallelNode(CompositionNode):
         self.source = source
         self.sink = sink
 
+    def get_graph_source(self):
+        return self.source
+
+    def get_graph_sink(self):
+        return self.sink
+
     def accept(self, visitor):
         visitor.visit_parallel_node(self)
 
@@ -46,6 +80,15 @@ class LeafNode(SPTreeNode):
     def __init__(self, edge: (str, str)):
         super().__init__()
         self.edge: (str, str) = edge
+
+    def get_graph_nodes(self):
+        return set(self.edge)
+
+    def get_graph_source(self):
+        return self.edge[0]
+
+    def get_graph_sink(self):
+        return self.edge[1]
 
     def accept(self, visitor):
         visitor.visit_leaf_node(self)
@@ -56,6 +99,18 @@ class PruneNode(SPTreeNode):
         super().__init__()
         self.weight = node_to_override.weight
         self.deadline = node_to_override.deadline
+        self.graph_source = node_to_override.get_graph_source()
+        self.graph_sink = node_to_override.get_graph_sink()
+        self.graph_nodes = node_to_override.get_graph_nodes()
+
+    def get_graph_nodes(self):
+        return self.graph_nodes
+
+    def get_graph_source(self):
+        return self.graph_source
+
+    def get_graph_sink(self):
+        return self.graph_sink
 
     def accept(self, visitor):
         pass
@@ -88,10 +143,11 @@ class WeightDistributionVisitor(SPTreeVisitor):
         self.vertex_weights = vertex_weights
 
     def visit_series_node(self, node: SeriesNode):
-        node.weight = node.left_child.weight + node.right_child.weight - self.vertex_weights[node.connecting_node]
+        node.weight = node.get_left_child().weight + node.get_right_child().weight - self.vertex_weights[
+            node.connecting_node]
 
     def visit_parallel_node(self, node: ParallelNode):
-        node.weight = max(node.left_child.weight, node.right_child.weight)
+        node.weight = max(child.weight for child in node.children)
 
     def visit_leaf_node(self, node: LeafNode):
         u, v = node.edge
