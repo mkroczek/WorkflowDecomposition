@@ -137,6 +137,10 @@ class SPTreeVisitor(ABC):
     def visit_leaf_node(self, node: LeafNode):
         pass
 
+    @abstractmethod
+    def visit_prune_node(self, node: PruneNode):
+        pass
+
 
 class WeightDistributionVisitor(SPTreeVisitor):
     def __init__(self, vertex_weights: dict[str, float]):
@@ -152,6 +156,9 @@ class WeightDistributionVisitor(SPTreeVisitor):
     def visit_leaf_node(self, node: LeafNode):
         u, v = node.edge
         node.weight = self.vertex_weights[u] + self.vertex_weights[v]
+
+    def visit_prune_node(self, node: PruneNode):
+        raise NotImplementedError("Unable to distribute weight for prune node")
 
 
 class DeadlineDistributionVisitor(SPTreeVisitor):
@@ -170,6 +177,9 @@ class DeadlineDistributionVisitor(SPTreeVisitor):
             self.deadlines[child.name] = node.deadline
 
     def visit_leaf_node(self, node: LeafNode):
+        node.deadline = self.deadlines[node.name]
+
+    def visit_prune_node(self, node: PruneNode):
         node.deadline = self.deadlines[node.name]
 
 
@@ -215,6 +225,10 @@ class PruneTreeVisitor(SPTreeVisitor):
         else:
             self.predicate_not_satisfied_action()
 
+    def visit_prune_node(self, node: PruneNode):
+        if not self.prune_predicate(node):
+            self.predicate_not_satisfied_action()
+
 
 def prune_tree(tree: SPTreeNode, prune_predicate: Callable,
                predicate_not_satisfied_action: Callable = None) -> SPTreeNode:
@@ -230,12 +244,12 @@ def prune_tree_by_max_subgraph_size(tree: SPTreeNode, max_subgraph_size: int):
         raise ValueError("Max subgraph size must be grater than 1")
 
     def max_subgraph_size_predicate(node: SPTreeNode):
-        raise NotImplementedError()
+        return len(node.get_graph_nodes()) <= max_subgraph_size
 
     def max_subgraph_size_not_satisfied_action():
         raise ValueError("Required prune tree predicate couldn't be satisfied")
 
-    prune_tree(
+    return prune_tree(
         tree,
         max_subgraph_size_predicate,
         max_subgraph_size_not_satisfied_action

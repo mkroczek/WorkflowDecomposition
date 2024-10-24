@@ -4,7 +4,7 @@ import networkx as nx
 import pytest
 
 from sp_graph import get_sp_decomposition_tree
-from tree import prune_tree, PruneNode, LeafNode
+from tree import prune_tree, PruneNode, LeafNode, prune_tree_by_max_subgraph_size
 
 
 def rise_value_error_action(message: str) -> Callable:
@@ -44,6 +44,17 @@ def test_prune_single_node():
     new_tree = prune_tree(tree, lambda node: True)
 
     assert isinstance(new_tree, PruneNode)
+
+
+def test_prune_by_max_subgraph_size():
+    graph = create_non_trivial_sp_dag()
+    tree = get_sp_decomposition_tree(graph)
+
+    new_tree = prune_tree_by_max_subgraph_size(tree, 4)
+
+    for leaf in new_tree.leaves:
+        assert isinstance(leaf, PruneNode)
+        assert len(leaf.get_graph_nodes()) <= 4
 
 
 def create_non_trivial_sp_dag():
