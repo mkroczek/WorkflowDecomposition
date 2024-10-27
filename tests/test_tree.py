@@ -90,6 +90,24 @@ def test_weights_distribution():
     assert tree.weight == 22
 
 
+def test_weights_distribution_use_default_weight():
+    graph = create_non_trivial_sp_dag()
+    tree = get_sp_decomposition_tree(graph)
+    vertices_weights = {
+        "Task1": 6,
+        "Task2": 8,
+        "Task3": 4,
+        "Task4": 4,
+        "Task5": 6,
+        "Task6": 2,
+        "Task7": 6
+    }
+
+    distribute_weights(tree, vertices_weights)
+
+    assert tree.weight == 22
+
+
 def test_deadline_distribution():
     graph = create_non_trivial_sp_dag()
     tree = get_sp_decomposition_tree(graph)

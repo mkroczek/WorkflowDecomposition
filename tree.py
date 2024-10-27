@@ -1,5 +1,6 @@
 import uuid
 from abc import abstractmethod, ABC
+from collections import defaultdict
 from collections.abc import Callable
 
 from anytree import Node, PostOrderIter, PreOrderIter
@@ -144,7 +145,7 @@ class SPTreeVisitor(ABC):
 
 class WeightDistributionVisitor(SPTreeVisitor):
     def __init__(self, vertex_weights: dict[str, float]):
-        self.vertex_weights = vertex_weights
+        self.vertex_weights = defaultdict(float, vertex_weights)
 
     def visit_series_node(self, node: SeriesNode):
         node.weight = node.get_left_child().weight + node.get_right_child().weight - self.vertex_weights[
