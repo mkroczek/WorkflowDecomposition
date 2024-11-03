@@ -15,5 +15,4 @@ class WorkflowDecompositionAlgorithm:
         distribute_weights(tree, workload)
         tree = prune_tree_by_max_subgraph_size(tree, max_subgraph_size)
         distribute_deadline(tree, deadline)
-        subgraphs = [workflow.subgraph(leaf.get_graph_nodes()) for leaf in tree.leaves]
-        return subgraphs
+        return [(sp_workflow.subgraph(leaf.get_graph_nodes()), leaf.deadline) for leaf in tree.leaves]

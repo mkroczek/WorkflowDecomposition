@@ -114,7 +114,7 @@ class PruneNode(SPTreeNode):
         return self.graph_sink
 
     def accept(self, visitor):
-        pass
+        visitor.visit_prune_node(self)
 
     @staticmethod
     def replace_in_tree(node: SPTreeNode):
