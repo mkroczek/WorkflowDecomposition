@@ -19,16 +19,16 @@ def test_decomposition_for_sp_dag():
     max_subgraph_size = 4
     algorithm = WorkflowDecompositionAlgorithm()
     expected_divisions = [
-        {"Task8", "Task3", "Task6"},
-        {"Task8", "Task1", "Task2", "Task7"},
-        {"Task7", "Task4", "Task5", "Task6"},
+        ({"Task8", "Task3", "Task6"}, 20),
+        ({"Task8", "Task1", "Task2", "Task7"}, 10),
+        ({"Task7", "Task4", "Task5", "Task6"}, 10),
     ]
 
     divisions = algorithm.decompose(graph, workload, deadline, max_subgraph_size)
 
     assert len(divisions) == 3
-    for subgraph in divisions:
-        assert set(subgraph.nodes) in expected_divisions
+    for subgraph, deadline in divisions:
+        assert (set(subgraph.nodes), deadline) in expected_divisions
 
 
 def test_decomposition_for_non_sp_dag():
@@ -46,16 +46,16 @@ def test_decomposition_for_non_sp_dag():
     max_subgraph_size = 4
     algorithm = WorkflowDecompositionAlgorithm()
     expected_divisions = [
-        {"NewNode7", "Task3", "Task6"},
-        {"NewNode7", "Task1", "Task2", "Task7"},
-        {"Task7", "Task4", "Task5", "Task6"},
+        ({"NewNode7", "Task3", "Task6"}, 20),
+        ({"NewNode7", "Task1", "Task2", "Task7"}, 10),
+        ({"Task7", "Task4", "Task5", "Task6"}, 10),
     ]
 
     divisions = algorithm.decompose(graph, workload, deadline, max_subgraph_size)
 
     assert len(divisions) == 3
-    for subgraph in divisions:
-        assert set(subgraph.nodes) in expected_divisions
+    for subgraph, deadline in divisions:
+        assert (set(subgraph.nodes), deadline) in expected_divisions
 
 
 def create_non_trivial_sp_dag():
