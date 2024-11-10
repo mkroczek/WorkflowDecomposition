@@ -57,9 +57,9 @@ def test_prune_node():
     series_node.deadline = 2
     parallel_node.deadline = 3
 
-    post_leaf_node = PruneNode(leaf_node_1)
-    post_series_node = PruneNode(series_node)
-    post_parallel_node = PruneNode(parallel_node)
+    post_leaf_node = PruneNode.from_node(leaf_node_1)
+    post_series_node = PruneNode.from_node(series_node)
+    post_parallel_node = PruneNode.from_node(parallel_node)
 
     for previous_node, new_node in zip([leaf_node_1, series_node, parallel_node],
                                        [post_leaf_node, post_series_node, post_parallel_node]):

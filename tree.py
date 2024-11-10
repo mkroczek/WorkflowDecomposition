@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 from collections import defaultdict
 from collections.abc import Callable
 
+import networkx as nx
 from anytree import Node, PostOrderIter, PreOrderIter
 
 
@@ -96,13 +97,11 @@ class LeafNode(SPTreeNode):
 
 
 class PruneNode(SPTreeNode):
-    def __init__(self, node_to_override: SPTreeNode):
+    def __init__(self, graph_source: str, graph_sink: str, graph_nodes: set[str]):
         super().__init__()
-        self.weight = node_to_override.weight
-        self.deadline = node_to_override.deadline
-        self.graph_source = node_to_override.get_graph_source()
-        self.graph_sink = node_to_override.get_graph_sink()
-        self.graph_nodes = node_to_override.get_graph_nodes()
+        self.graph_source = graph_source
+        self.graph_sink = graph_sink
+        self.graph_nodes = graph_nodes
 
     def get_graph_nodes(self):
         return self.graph_nodes
@@ -117,12 +116,46 @@ class PruneNode(SPTreeNode):
         visitor.visit_prune_node(self)
 
     @staticmethod
+    def from_node(node_to_override: SPTreeNode):
+        prune_node = PruneNode(
+            graph_source=node_to_override.get_graph_source(),
+            graph_sink=node_to_override.get_graph_sink(),
+            graph_nodes=node_to_override.get_graph_nodes()
+        )
+        prune_node.weight = node_to_override.weight
+        prune_node.deadline = node_to_override.deadline
+        return prune_node
+
+    @staticmethod
     def replace_in_tree(node: SPTreeNode):
         parent = node.parent
         node.parent = None
-        prune_node = PruneNode(node)
+        prune_node = PruneNode.from_node(node)
         prune_node.parent = parent
         return prune_node
+
+
+class ModifiedSeriesNode(CompositionNode):
+    def __init__(self, left_child, right_child, edge):
+        super().__init__(left_child, right_child)
+        self.edge = edge
+        self.graph_source = left_child.get_graph_source()
+        self.graph_sink = right_child.get_graph_sink()
+
+    def get_graph_source(self):
+        return self.graph_source
+
+    def get_graph_sink(self):
+        return self.graph_sink
+
+    def get_left_child(self):
+        return [c for c in self.children if c.get_graph_sink() == self.edge[0]][0]
+
+    def get_right_child(self):
+        return [c for c in self.children if c.get_graph_source() == self.edge[1]][0]
+
+    def accept(self, visitor):
+        visitor.visit_modified_series_node(self)
 
 
 class SPTreeVisitor(ABC):
@@ -140,6 +173,10 @@ class SPTreeVisitor(ABC):
 
     @abstractmethod
     def visit_prune_node(self, node: PruneNode):
+        pass
+
+    @abstractmethod
+    def visit_modified_series_node(self, node: ModifiedSeriesNode):
         pass
 
 
@@ -160,6 +197,9 @@ class WeightDistributionVisitor(SPTreeVisitor):
 
     def visit_prune_node(self, node: PruneNode):
         raise NotImplementedError("Unable to distribute weight for prune node")
+
+    def visit_modified_series_node(self, node: ModifiedSeriesNode):
+        raise NotImplementedError("Unable to distribute weight for modified series node")
 
 
 class DeadlineDistributionVisitor(SPTreeVisitor):
@@ -182,6 +222,9 @@ class DeadlineDistributionVisitor(SPTreeVisitor):
 
     def visit_prune_node(self, node: PruneNode):
         node.deadline = self.deadlines[node.name]
+
+    def visit_modified_series_node(self, node: ModifiedSeriesNode):
+        self.visit_series_node(node)
 
 
 def distribute_weights(tree: SPTreeNode, vertex_weights: dict):
@@ -230,11 +273,14 @@ class PruneTreeVisitor(SPTreeVisitor):
         if not self.prune_predicate(node):
             self.predicate_not_satisfied_action()
 
+    def visit_modified_series_node(self, node: ModifiedSeriesNode):
+        raise NotImplementedError("Unable prune modified series node")
+
 
 def prune_tree(tree: SPTreeNode, prune_predicate: Callable,
                predicate_not_satisfied_action: Callable = None) -> SPTreeNode:
     if prune_predicate(tree):
-        return PruneNode(tree)
+        return PruneNode.from_node(tree)
     visitor = PruneTreeVisitor(prune_predicate, predicate_not_satisfied_action)
     tree.accept(visitor)
     return tree
@@ -255,3 +301,91 @@ def prune_tree_by_max_subgraph_size(tree: SPTreeNode, max_subgraph_size: int):
         max_subgraph_size_predicate,
         max_subgraph_size_not_satisfied_action
     )
+
+
+class SeriesNodesModifier:
+    def __init__(self, tree: SPTreeNode, vertex_weights: dict[str, float], workflow: nx.DiGraph):
+        self.tree = tree
+        self.vertex_weights = defaultdict(float, vertex_weights)
+        self.workflow = workflow
+
+    def modify_tree(self) -> SPTreeNode:
+        return self._recurse(self.tree, {})
+
+    def _recurse(self, node: SPTreeNode, override_vertices: dict[str, str]) -> SPTreeNode:
+        if isinstance(node, LeafNode):
+            return self.modify_leaf_node(node, override_vertices)
+        if isinstance(node, PruneNode):
+            return self.modify_prune_node(node, override_vertices)
+        if isinstance(node, ParallelNode):
+            return self.modify_parallel_node(node, override_vertices)
+        if isinstance(node, SeriesNode):
+            return self.modify_series_node(node, override_vertices)
+        else:
+            raise TypeError(f"Node of type {type(node)} cannot be processed by series node modification")
+
+    def new_weight(self, node: SPTreeNode, override_vertices: dict[str, str]):
+        new_weight = node.weight
+        graph_vertices = node.get_graph_nodes()
+        for vertex in override_vertices.keys():
+            if vertex in graph_vertices:
+                new_weight -= self.vertex_weights[vertex]
+        return new_weight
+
+    def modify_leaf_node(self, node: LeafNode, override_vertices: dict[str, str]):
+        u, v = node.edge
+        new_u, new_v = override_vertices.get(u, u), override_vertices.get(v, v)
+        new_node = LeafNode(edge=(new_u, new_v))
+        new_node.weight = self.new_weight(node, override_vertices)
+        return new_node
+
+    def modify_prune_node(self, node: PruneNode, override_vertices: dict[str, str]):
+        graph_source = override_vertices.get(node.get_graph_source(), node.get_graph_source())
+        graph_sink = override_vertices.get(node.get_graph_sink(), node.get_graph_sink())
+        graph_vertices = {override_vertices.get(v, v) for v in node.get_graph_nodes()}
+        new_node = PruneNode(graph_source, graph_sink, graph_vertices)
+        new_node.weight = self.new_weight(node, override_vertices)
+        return new_node
+
+    def modify_parallel_node(self, node: ParallelNode, override_vertices: dict[str, str]):
+        children = [self._recurse(child, override_vertices) for child in node.children]
+        source = override_vertices.get(node.get_graph_source(), node.get_graph_source())
+        sink = override_vertices.get(node.get_graph_sink(), node.get_graph_sink())
+        new_node = ParallelNode(children[0], children[1], source, sink)
+        new_node.weight = self.new_weight(node, override_vertices)
+        return new_node
+
+    def should_modify_series_node(self, node: SeriesNode):
+        return self.vertex_weights[node.connecting_node] > 0
+
+    def add_vertex_substitute(self, connecting_vertex, connecting_vertex_substitute):
+        self.workflow.add_node(connecting_vertex_substitute)
+        out_edges = list(self.workflow.out_edges(connecting_vertex))
+        for (src, dst) in out_edges:
+            self.workflow.add_edge(connecting_vertex_substitute, dst)
+        self.workflow.remove_edges_from(out_edges)
+        self.workflow.add_edge(connecting_vertex, connecting_vertex_substitute)
+
+    def modify_series_node(self, node: SeriesNode, override_vertices: dict[str, str]):
+        if self.should_modify_series_node(node):
+            connecting_vertex = node.connecting_node
+            connecting_vertex_substitute = connecting_vertex + "_substitute"
+            self.add_vertex_substitute(connecting_vertex, connecting_vertex_substitute)
+
+            left_child = self._recurse(node.get_left_child(), override_vertices)
+            right_override_vertices = override_vertices.copy()
+            right_override_vertices[connecting_vertex] = connecting_vertex_substitute
+            right_child = self._recurse(node.get_right_child(), right_override_vertices)
+            new_node = ModifiedSeriesNode(left_child, right_child, (connecting_vertex, connecting_vertex_substitute))
+            new_node.weight = self.new_weight(node, override_vertices)
+            return new_node
+        else:
+            left_child = self._recurse(node.get_left_child(), override_vertices)
+            right_child = self._recurse(node.get_right_child(), override_vertices)
+            new_node = SeriesNode(left_child, right_child, node.connecting_node)
+            new_node.weight = self.new_weight(node, override_vertices)
+            return new_node
+
+
+def modify_series_nodes(tree: SPTreeNode, vertex_weights: dict[str, float], workflow: nx.DiGraph) -> SPTreeNode:
+    return SeriesNodesModifier(tree, vertex_weights, workflow).modify_tree()
