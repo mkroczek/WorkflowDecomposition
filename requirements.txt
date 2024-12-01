@@ -5,3 +5,4 @@ pytest
 qhyper==0.2.2
 wfcommons==1.0
 jupyterlab
+pygraphviz
