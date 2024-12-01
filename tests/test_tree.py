@@ -2,8 +2,8 @@ import math
 
 import networkx as nx
 
-from sp_graph import get_sp_decomposition_tree
-from tree import LeafNode, SeriesNode, ParallelNode, distribute_weights, distribute_deadline, PruneNode
+from decomposition.sp_graph import get_sp_decomposition_tree
+from decomposition.tree import LeafNode, SeriesNode, ParallelNode, distribute_weights, distribute_deadline, PruneNode
 
 
 def test_leaf_node():

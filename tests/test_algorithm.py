@@ -1,6 +1,6 @@
 import networkx as nx
 
-from algorithm import WorkflowDecompositionAlgorithm
+from decomposition.algorithm import WorkflowDecompositionAlgorithm
 
 
 def test_decomposition_for_sp_dag():

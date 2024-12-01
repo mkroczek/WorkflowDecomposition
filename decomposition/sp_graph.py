@@ -1,6 +1,6 @@
 import networkx as nx
 
-from tree import SPTreeNode, ParallelNode, SeriesNode, LeafNode
+from decomposition.tree import SPTreeNode, ParallelNode, SeriesNode, LeafNode
 
 
 def with_extra_functions(graph: nx.MultiDiGraph):

@@ -1,7 +1,7 @@
 import networkx as nx
 from wfcommons import Instance
 
-from wfcommons_utils import wrap_in_workflow
+from decomposition.wfcommons_utils import wrap_in_workflow
 
 
 def test_wrap_in_workflow():

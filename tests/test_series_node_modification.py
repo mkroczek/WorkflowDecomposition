@@ -1,4 +1,4 @@
-from tree import PruneNode, SeriesNodesModifier
+from decomposition.tree import PruneNode, SeriesNodesModifier
 
 
 def test_new_weight_calculation():

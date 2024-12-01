@@ -1,6 +1,6 @@
 from QHyper.problems.workflow_scheduling import Workflow
 
-from qhyper import WorkflowDecompositionQHyperAdapter, QHyperWorkflow
+from decomposition.qhyper import WorkflowDecompositionQHyperAdapter, QHyperWorkflow
 
 
 def test_qhyper_decomposition():

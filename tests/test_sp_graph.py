@@ -1,6 +1,6 @@
 import networkx as nx
 
-from sp_graph import is_trivial_sp_dag, reduce_graph, is_sp_dag, get_sp_decomposition_tree
+from decomposition.sp_graph import is_trivial_sp_dag, reduce_graph, is_sp_dag, get_sp_decomposition_tree
 
 
 def test_trivial_sp_dag_recognition():

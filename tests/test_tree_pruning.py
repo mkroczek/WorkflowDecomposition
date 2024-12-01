@@ -3,8 +3,8 @@ from collections.abc import Callable
 import networkx as nx
 import pytest
 
-from sp_graph import get_sp_decomposition_tree
-from tree import prune_tree, PruneNode, LeafNode, prune_tree_by_max_subgraph_size
+from decomposition.sp_graph import get_sp_decomposition_tree
+from decomposition.tree import prune_tree, PruneNode, LeafNode, prune_tree_by_max_subgraph_size
 
 
 def rise_value_error_action(message: str) -> Callable:

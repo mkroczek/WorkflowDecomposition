@@ -4,8 +4,8 @@ import tempfile
 from QHyper.problems.workflow_scheduling import Workflow, TargetMachine
 from wfcommons.common import Workflow as WfWorkflow
 
-from algorithm import WorkflowDecompositionAlgorithm
-from wfcommons_utils import wrap_in_workflow
+from decomposition.algorithm import WorkflowDecompositionAlgorithm
+from decomposition.wfcommons_utils import wrap_in_workflow
 
 
 class QHyperWorkflow(Workflow):
