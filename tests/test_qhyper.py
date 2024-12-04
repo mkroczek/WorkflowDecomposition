@@ -1,15 +1,15 @@
 from QHyper.problems.workflow_scheduling import Workflow
 
-from decomposition.qhyper import WorkflowDecompositionQHyperAdapter, QHyperWorkflow
+from decomposition.qhyper import WorkflowDecompositionQHyperAdapter, QHyperWorkflow, Division
 
 
 def test_qhyper_decomposition():
     workflow = load_workflow()
     max_subgraph_size = 4
     adapter = WorkflowDecompositionQHyperAdapter(workflow)
-    subproblems = adapter.decompose(max_subgraph_size)
-    assert len(subproblems) == 4
-    assert {w.deadline for w in subproblems} == {50.0, 25.0, 25.0, 25.0}
+    division: Division = adapter.decompose(max_subgraph_size)
+    assert len(division.workflows) == 4
+    assert {w.deadline for w in division.workflows} == {50.0, 25.0, 25.0, 25.0}
 
 
 def test_qhyper_workflow():

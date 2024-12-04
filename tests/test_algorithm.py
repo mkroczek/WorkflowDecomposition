@@ -24,7 +24,7 @@ def test_decomposition_for_sp_dag():
         ({"Task7_substitute", "Task4", "Task5", "Task6"}, 7.27)
     ]
 
-    divisions = algorithm.decompose(graph, workload, deadline, max_subgraph_size)
+    divisions = algorithm.decompose(graph, workload, deadline, max_subgraph_size).workflows
 
     assert len(divisions) == 3
     for subgraph, deadline in divisions:
@@ -51,7 +51,7 @@ def test_decomposition_for_non_sp_dag():
         ({"Task7_substitute", "Task4", "Task5", "Task6"}, 7.27),
     ]
 
-    divisions = algorithm.decompose(graph, workload, deadline, max_subgraph_size)
+    divisions = algorithm.decompose(graph, workload, deadline, max_subgraph_size).workflows
 
     assert len(divisions) == 3
     for subgraph, deadline in divisions:
