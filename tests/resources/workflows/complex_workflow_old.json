@@ -1,0 +1,218 @@
+{
+    "name": "complex-workflow",
+    "description": "Instance generated with WfCommons - https://wfcommons.org",
+    "createdAt": "2023-10-30T20:10:53.827332+01:00",
+    "schemaVersion": "1.4",
+    "author": {
+        "name": "marcin",
+        "email": "support@wfcommons.org"
+    },
+    "wms": {
+        "name": "WfCommons",
+        "version": "1.0-dev",
+        "url": "https://docs.wfcommons.org/en/v1.0-dev/"
+    },
+    "workflow": {
+        "executedAt": "20221228T005202+0100",
+        "tasks": [
+            {
+                "name": "Task1",
+                "type": "compute",
+                "command": {},
+                "parents": [],
+                "children": [
+                    "Task2",
+                    "Task3",
+                    "Task4",
+                    "Task5",
+                    "Task6"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task0",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 1,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task2",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task1"
+                ],
+                "children": [
+                    "Task8",
+                    "Task9"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task2",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 2,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task3",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task1"
+                ],
+                "children": [
+                    "Task7"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task3",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 2,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task4",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task1"
+                ],
+                "children": [
+                    "Task8",
+                    "Task9"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task4",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 2,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task5",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task1"
+                ],
+                "children": [
+                    "Task9"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task5",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 2,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task6",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task1"
+                ],
+                "children": [
+                    "Task8"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task6",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 2,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task7",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task3"
+                ],
+                "children": [
+                    "Task10"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task7",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 3,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task8",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task2",
+                    "Task4",
+                    "Task6"
+                ],
+                "children": [
+                    "Task10"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task8",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 3,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task9",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task2",
+                    "Task4",
+                    "Task5"
+                ],
+                "children": [
+                    "Task10"
+                ],
+                "files": [],
+                "cores": 1,
+                "id": "Task9",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 3,
+                "memoryInBytes": 0
+            },
+            {
+                "name": "Task10",
+                "type": "compute",
+                "command": {},
+                "parents": [
+                    "Task7",
+                    "Task8",
+                    "Task9"
+                ],
+                "children": [],
+                "files": [],
+                "cores": 1,
+                "id": "Task10",
+                "memory": 0,
+                "machine": "default_machine",
+                "runtimeInSeconds": 4,
+                "memoryInBytes": 0
+            }
+        ],
+        "machines": [
+            {
+                "nodeName": "default_machine",
+                "cpu": {
+                    "count": 1,
+                    "speed": 1
+                }
+            }
+        ],
+        "makespanInSeconds": 0
+    }
+}
