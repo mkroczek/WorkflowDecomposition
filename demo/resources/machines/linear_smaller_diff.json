@@ -1,0 +1,54 @@
+{
+  "machines": [
+    {
+      "name": "Machine1",
+      "memory": 0,
+      "cpu": {
+        "speed": 1.0,
+        "count": 5000
+      },
+      "price": 1.0,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "Machine2",
+      "memory": 0,
+      "cpu": {
+        "speed": 1.25,
+        "count": 5000
+      },
+      "price": 1.5625,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "Machine3",
+      "memory": 0,
+      "cpu": {
+        "speed": 1.5,
+        "count": 5000
+      },
+      "price": 2.25,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "Machine4",
+      "memory": 0,
+      "cpu": {
+        "speed": 1.75,
+        "count": 5000
+      },
+      "price": 3.0625,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "Machine5",
+      "memory": 0,
+      "cpu": {
+        "speed": 2.0,
+        "count": 5000
+      },
+      "price": 4.0,
+      "memory_cost_multiplier": 0.0
+    }
+  ]
+}
