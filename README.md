@@ -32,7 +32,8 @@ using [this method](https://dl.acm.org/doi/10.1145/800135.804393).
 
 Weights are associated with workload and are calculated for each node in the binary decomposition tree. Tree root's
 weight represent workload for the whole workflow, whereas leaf's weight for the single edge.
-![ttsp_mapping](images/weights.png  "Weights distributed on the binary decomposition tree")
+
+# <img width="400" alt="weights" src="images/weights.png" class="center">
 
 ### Deadline distribution
 
@@ -41,10 +42,11 @@ to propagate the deadline over decomposition tree.
 
 ### Tree pruning
 
-In the final step, independent workflows are extracted from the tree using the pruning method. User defines a pruning
+In the final step, independent workflossws are extracted from the tree using the pruning method. User defines a pruning
 border, which is expressed as the expected number of tasks in each resulting subworkflow. Leaves of the pruned tree
 represent parts of a decomposed workflow, that have its own deadline and can be scheduled independently.
-![ttsp_mapping](images/subworkflows.png  "Result of the decomposition")
+
+# <img width="400" alt="weights" src="images/subworkflows.png" class="center">
 
 ### Merging results
 
