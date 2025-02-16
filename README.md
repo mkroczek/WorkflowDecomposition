@@ -43,7 +43,7 @@ to propagate the deadline over decomposition tree.
 
 ### Tree pruning
 
-In the final step, independent workflossws are extracted from the tree using the pruning method. User defines a pruning
+In the final step, independent workflows are extracted from the tree using the pruning method. User defines a pruning
 border, which is expressed as the expected number of tasks in each resulting subworkflow. Leaves of the pruned tree
 represent parts of a decomposed workflow, that have its own deadline and can be scheduled independently.
 
