@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterable
 
+import numpy as np
 from QHyper.problems.workflow_scheduling import WorkflowSchedulingOneHot, Workflow
 from QHyper.solvers import Solver, SolverResult
 
@@ -29,9 +30,10 @@ class WorkflowSchedulingSolverDecorator:
         self.problem: WorkflowSchedulingOneHot = decorate(solver.problem)
 
     def solve(self) -> WorkflowSchedule:
-        solver_result: SolverResult = self.solver.solve(params_inits={"name": "wsp"})
-        # TODO Gurobi returns dict as before, but CQM returns SolverResult
-        machine_assignment = self.problem.decode_solution(solver_result)
+        solver_result: SolverResult = self.solver.solve()
+        best_solution = self._get_highest_probability_solution(solver_result)
+        solution = {var: best_solution[var] for var in best_solution.dtype.names if var != 'probability'}
+        machine_assignment = self.problem.decode_solution(solution)
 
         return WorkflowSchedule(
             cost=self.problem.calculate_solution_cost(machine_assignment),
@@ -40,6 +42,11 @@ class WorkflowSchedulingSolverDecorator:
             machine_assignment=machine_assignment,
             workflow=self.problem.workflow
         )
+
+    @staticmethod
+    def _get_highest_probability_solution(solver_result: SolverResult) -> np.record:
+        probabilities_descending = np.sort(solver_result.probabilities, order='probability')[::-1]
+        return probabilities_descending[0]
 
 
 class DecomposedWorkflowSchedulingSolver:
@@ -66,7 +73,7 @@ class DecomposedWorkflowSchedulingSolver:
         assert time <= deadline, "Scheduling result exceeds the deadline!"
 
     def calculate_time_and_cost(self, workflow: Workflow, machine_assignment: dict[str, str]):
-        problem: WorkflowSchedulingOneHot = WorkflowSchedulingOneHot(workflow)
+        problem: WorkflowSchedulingOneHot = decorate(WorkflowSchedulingOneHot(workflow))
         time = problem.calculate_solution_timespan(machine_assignment)
         cost = problem.calculate_solution_cost(machine_assignment)
         deadline = workflow.deadline
