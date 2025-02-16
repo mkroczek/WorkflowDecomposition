@@ -1,6 +1,7 @@
-# Workflow Decomposition Algorithm
+# Series-Parallel Workflow Decomposition Algorithm
 
-Workflow Decomposition Algorithm helps in scheduling big workflows on solvers with limited capacity, such as
+Series-Parallel Workflow Decomposition Algorithm (SPWD) helps in scheduling big workflows on solvers with limited
+capacity, such as
 the [CQM](https://docs.ocean.dwavesys.com/en/stable/docs_dimod/reference/models.html#module-dimod.constrained.constrained)
 hybrid (quantum-classical) sampler. It splits workflows into independent
 problems, that can be solved separately and partial results be merged into the final schedule.
