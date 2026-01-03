@@ -3,9 +3,9 @@ from QHyper.problems.workflow_scheduling import Workflow, WorkflowSchedulingOneH
 from decomposition.qhyper.problem import decorate
 
 
-def test_solution_cost_and_timespan():
+def test_solution_cost_and_timespan(resources_dir):
     # given
-    workflow = load_workflow()
+    workflow = load_workflow(resources_dir)
     wsp = WorkflowSchedulingOneHot(workflow)
     machine_assignment = {
         "Task1": "MachineB",
@@ -30,8 +30,8 @@ def test_solution_cost_and_timespan():
     assert timespan == 28
 
 
-def load_workflow():
-    tasks_file = "resources/workflows/complex_workflow_old.json"
-    machines_file = "resources/machines/3_machines.json"
+def load_workflow(resources_dir):
+    tasks_file = resources_dir / "workflows/complex_workflow_old.json"
+    machines_file = resources_dir / "machines/3_machines.json"
     deadline = 50
     return Workflow(tasks_file, machines_file, deadline)

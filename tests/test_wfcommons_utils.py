@@ -4,8 +4,8 @@ from wfcommons import Instance
 from decomposition.wfcommons_utils import wrap_in_workflow
 
 
-def test_wrap_in_workflow():
-    tasks_file = "resources/workflows/complex_workflow.json"
+def test_wrap_in_workflow(resources_dir):
+    tasks_file = resources_dir / "workflows/complex_workflow.json"
     old_workflow = Instance(tasks_file).workflow
     subworkflow = nx.DiGraph([('Task1', 'Task2'), ('Task2', 'NewTask')])
 
