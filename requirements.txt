@@ -2,7 +2,7 @@ anytree
 networkx
 pandas
 pytest
-qhyper==0.3.0
+qhyper==0.3.4
 wfcommons==1.0
 jupyterlab
 numpy
