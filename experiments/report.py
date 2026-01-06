@@ -33,7 +33,7 @@ class ExecutionReport:
     deadline: int
     solver: str
     solution: Solution
-    max_graph_size: int = None
+    max_subgraph_size: int = None
     timestamp: str = field(default=datetime.datetime.now().isoformat())
 
     def write_json(self, file_path):
