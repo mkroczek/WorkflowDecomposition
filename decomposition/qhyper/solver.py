@@ -8,7 +8,7 @@ from QHyper.problems.workflow_scheduling import WorkflowSchedulingOneHot, Workfl
 from QHyper.solvers import Solver, SolverResult
 
 from decomposition.qhyper.algorithm import Division
-from decomposition.qhyper.problem import decorate
+from decomposition.qhyper.problem import decorate, WorkflowSchedulingOneHotEnhanced
 
 
 @dataclass(frozen=True)
@@ -73,7 +73,7 @@ class DecomposedWorkflowSchedulingSolver:
         assert time <= deadline, "Scheduling result exceeds the deadline!"
 
     def calculate_time_and_cost(self, workflow: Workflow, machine_assignment: dict[str, str]):
-        problem: WorkflowSchedulingOneHot = decorate(WorkflowSchedulingOneHot(workflow))
+        problem: WorkflowSchedulingOneHot = decorate(WorkflowSchedulingOneHotEnhanced(workflow))
         time = problem.calculate_solution_timespan(machine_assignment)
         cost = problem.calculate_solution_cost(machine_assignment)
         deadline = workflow.deadline
