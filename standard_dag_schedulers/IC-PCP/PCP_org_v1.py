@@ -36,58 +36,58 @@ prices = []
 tot_idle  = 0
 
 def  dumpJSON(start,end):
-      print "{"
-      print "  \"nodes\": ["
-      for u in xrange(start,end):
-         print "        { \"order\":",str(G.node[u]["order"])+","
-         print "          \"name\":","\""+G.node[u]["name"]
-         #print "          \"name\":","\""+G.node[u]["name"]+"\","
-         #print "          \"time1\":",str(G.node[u]["time1"])+","
-         #print "          \"time2\":",str(G.node[u]["time2"])+","
-         #print "          \"time3\":",str(G.node[u]["time3"])+","
-         #print "          \"EST\":",str(G.node[u]["EST"])+","
-         #print "          \"EFT\":",str(G.node[u]["EFT"])+","
-         #print "          \"LST\":",str(G.node[u]["LST"])+","
-         #print "          \"LFT\":",str(G.node[u]["LFT"])+","
-         #print "          \"assigned\":",str(G.node[u]["assigned"])+","
-         #print "          \"Service\":",str(G.node[u]["Service"])+","
-         #print "          \"Instance\":",str(G.node[u]["Instance"])+","
-         #print "          \"time\":",str(G.node[u]["time"])
-         print "        },"
+      print("{")
+      print("  \"nodes\": [")
+      for u in range(start,end):
+         print("        { \"order\":",str(G.nodes[u]["order"])+",")
+         print("          \"name\":","\""+G.nodes[u]["name"])
+         #print "          \"name\":","\""+G.nodes[u]["name"]+"\","
+         #print "          \"time1\":",str(G.nodes[u]["time1"])+","
+         #print "          \"time2\":",str(G.nodes[u]["time2"])+","
+         #print "          \"time3\":",str(G.nodes[u]["time3"])+","
+         #print "          \"EST\":",str(G.nodes[u]["EST"])+","
+         #print "          \"EFT\":",str(G.nodes[u]["EFT"])+","
+         #print "          \"LST\":",str(G.nodes[u]["LST"])+","
+         #print "          \"LFT\":",str(G.nodes[u]["LFT"])+","
+         #print "          \"assigned\":",str(G.nodes[u]["assigned"])+","
+         #print "          \"Service\":",str(G.nodes[u]["Service"])+","
+         #print "          \"Instance\":",str(G.nodes[u]["Instance"])+","
+         #print "          \"time\":",str(G.nodes[u]["time"])
+         print("        },")
 
-      print "        { \"order\":",str(G.node[end]["order"])+","
-      print "          \"name\":","\""+ G.node[end]["name"]
-      #print "          \"name\":","\""+ G.node[end]["name"]+"\","
-      #print "          \"time1\":",str(G.node[end]["time1"])+","
-      #print "          \"time2\":",str(G.node[end]["time2"])+","
-      #print "          \"time3\":",str(G.node[end]["time3"])+","
-      #print "          \"EST\":",str(G.node[end]["EST"])+","
-      #print "          \"EFT\":",str(G.node[end]["EFT"])+","
-      #print "          \"LST\":",str(G.node[end]["LST"])+","
-      #print "          \"LFT\":",str(G.node[end]["LFT"])+","
-      #print "          \"assigned\": ",str(G.node[end]["assigned"])+","
-      #print "          \"Service\": ",str(G.node[end]["Service"])+","
-      #print "          \"Instance\": ",str(G.node[end]["Instance"])+","
-      #print "          \"time\": ",str(G.node[end]["time"])
-      print "        }"
-      print "  ],"
-      print "  \"links\": ["
+      print("        { \"order\":",str(G.nodes[end]["order"])+",")
+      print("          \"name\":","\""+ G.nodes[end]["name"])
+      #print "          \"name\":","\""+ G.nodes[end]["name"]+"\","
+      #print "          \"time1\":",str(G.nodes[end]["time1"])+","
+      #print "          \"time2\":",str(G.nodes[end]["time2"])+","
+      #print "          \"time3\":",str(G.nodes[end]["time3"])+","
+      #print "          \"EST\":",str(G.nodes[end]["EST"])+","
+      #print "          \"EFT\":",str(G.nodes[end]["EFT"])+","
+      #print "          \"LST\":",str(G.nodes[end]["LST"])+","
+      #print "          \"LFT\":",str(G.nodes[end]["LFT"])+","
+      #print "          \"assigned\": ",str(G.nodes[end]["assigned"])+","
+      #print "          \"Service\": ",str(G.nodes[end]["Service"])+","
+      #print "          \"Instance\": ",str(G.nodes[end]["Instance"])+","
+      #print "          \"time\": ",str(G.nodes[end]["time"])
+      print("        }")
+      print("  ],")
+      print("  \"links\": [")
 
       num_edges = G.number_of_edges()
       nedge = 0
       for (u,v) in G.edges():
         nedge += 1
-        print "        { \"source\":","\""+G.node[u]["name"]+"\","
-        print "          \"target\":","\""+G.node[v]["name"]+"\","
-        print "          \"throughput\":",str(G[u][v]["throughput"])+","
-        print "          \"inpath\": 0"
+        print("        { \"source\":","\""+G.nodes[u]["name"]+"\",")
+        print("          \"target\":","\""+G.nodes[v]["name"]+"\",")
+        print("          \"throughput\":",str(G[u][v]["throughput"])+",")
+        print("          \"inpath\": 0")
         if nedge<num_edges :
-          print "        },"
+          print("        },")
         else :
-          print "        }"
+          print("        }")
 
-      print "    ]"
-      print "}"
+      print("    ]")
+      print("}")
 
 
 def checkGraphTimes():
@@ -99,19 +99,19 @@ def checkGraphTimes():
         return 0
 
 def graphCheckEST( ):
-    for n in xrange(0, number_of_nodes) :
-        nservice  = G.node[n]["Service"]
-        ninstance = G.node[n]["Instance"]    
+    for n in range(0, number_of_nodes) :
+        nservice  = G.nodes[n]["Service"]
+        ninstance = G.nodes[n]["Instance"]    
 
         maxest = 0
         dominant_parent = -1
         p_iter = G.predecessors(n)
         while True :
           try:
-            p = p_iter.next()
-            pservice  = G.node[p]["Service"]
-            pinstance = G.node[p]["Instance"]
-            est = G.node[p]["EFT"] 
+            p = next(p_iter)
+            pservice  = G.nodes[p]["Service"]
+            pinstance = G.nodes[p]["Instance"]
+            est = G.nodes[p]["EFT"] 
             lcost = G[p][n]["throughput"]
 
             if pservice == nservice :
@@ -131,18 +131,18 @@ def graphCheckEST( ):
 
         if maxest>deadline :
 
-            print "\n**** Wrong EST: "+"EST("+G.node[n]["name"]+")="+str(G.node[n]["EST"])+", EST from dominant parent("+G.node[dominant_parent]["name"]+")="+str(maxest)+"; deadline="+str(deadline)
+            print("\n**** Wrong EST: "+"EST("+G.nodes[n]["name"]+")="+str(G.nodes[n]["EST"])+", EST from dominant parent("+G.nodes[dominant_parent]["name"]+")="+str(maxest)+"; deadline="+str(deadline))
 
             return -1
 
-        elif G.node[n]["EST"] < maxest :
+        elif G.nodes[n]["EST"] < maxest :
 
-            print "\n**** EST mismatch: "+"EST("+G.node[n]["name"]+")="+str(G.node[n]["EST"])+" < "+"EST("+G.node[dominant_parent]["name"]+")="+str(maxest)
+            print("\n**** EST mismatch: "+"EST("+G.nodes[n]["name"]+")="+str(G.nodes[n]["EST"])+" < "+"EST("+G.nodes[dominant_parent]["name"]+")="+str(maxest))
 
             return -1
-        elif G.node[n]["EST"] > deadline:
+        elif G.nodes[n]["EST"] > deadline:
 
-            print "\n**** Wrong EST: "+"EST("+G.node[n]["name"]+")="+str(G.node[n]["EST"])+"> deadline="+str(deadline)
+            print("\n**** Wrong EST: "+"EST("+G.nodes[n]["name"]+")="+str(G.nodes[n]["EST"])+"> deadline="+str(deadline))
 
             return -1
 
@@ -150,20 +150,20 @@ def graphCheckEST( ):
 
                   
 def graphCheckLFT(  ):
-    for n in xrange(0, number_of_nodes) :
-        nservice  = G.node[n]["Service"]
-        ninstance = G.node[n]["Instance"]    
+    for n in range(0, number_of_nodes) :
+        nservice  = G.nodes[n]["Service"]
+        ninstance = G.nodes[n]["Instance"]    
 
         minlft = deadline
         dominant_child = -1
         c_iter = G.successors(n)
         while True :
           try:
-            c = c_iter.next()             
-            cservice  = G.node[c]["Service"];
-            cinstance = G.node[c]["Instance"];
+            c = next(c_iter)             
+            cservice  = G.nodes[c]["Service"];
+            cinstance = G.nodes[c]["Instance"];
 
-            lft = G.node[c]["LST"]
+            lft = G.nodes[c]["LST"]
             lcost = G[n][c]["throughput"]
                              
             if cservice == nservice :
@@ -185,18 +185,18 @@ def graphCheckLFT(  ):
 
         if minlft<0 :
 
-            print "\n**** Negative LFT : "+"LFT("+G.node[n]["name"]+")="+str(G.node[n]["LFT"])+" LFT from dominant child("+G.node[dominant_child]["name"]+")="+str(minlft)
+            print("\n**** Negative LFT : "+"LFT("+G.nodes[n]["name"]+")="+str(G.nodes[n]["LFT"])+" LFT from dominant child("+G.nodes[dominant_child]["name"]+")="+str(minlft))
 
             return -1
 
-        elif G.node[n]["LFT"] > minlft :
+        elif G.nodes[n]["LFT"] > minlft :
 
-            print "\n**** LFT mismatch: "+"LFT("+G.node[n]["name"]+")="+str(G.node[n]["LFT"])+" > "+"LFT("+G.node[dominant_child]["name"]+")="+str(minlft)
+            print("\n**** LFT mismatch: "+"LFT("+G.nodes[n]["name"]+")="+str(G.nodes[n]["LFT"])+" > "+"LFT("+G.nodes[dominant_child]["name"]+")="+str(minlft))
 
             return -1
-        elif G.node[n]["LFT"] <0 :
+        elif G.nodes[n]["LFT"] <0 :
 
-            print "\n**** Negative LFT : "+"LFT("+G.node[n]["name"]+")="+str(G.node[n]["LFT"])
+            print("\n**** Negative LFT : "+"LFT("+G.nodes[n]["name"]+")="+str(G.nodes[n]["LFT"]))
 
             return -1
     return 0
@@ -205,35 +205,35 @@ def graphCheckLFT(  ):
 def checkIdleTime( ):
     tot_idle = 0
     idles = "\n"
-    for i in xrange(0, len(instances)) :
+    for i in range(0, len(instances)) :
         if len(instances[i])>1:
-           for j in xrange(0, len(instances[i])-1) :
-             idle_time = G.node[instances[i][j+1]]["EST"]-G.node[instances[i][j]]["EFT"]
+           for j in range(0, len(instances[i])-1) :
+             idle_time = G.nodes[instances[i][j+1]]["EST"]-G.nodes[instances[i][j]]["EFT"]
              if idle_time>0 :
                  tot_idle += idle_time
-                 idles += "\n Instance["+str(i)+"] constains idle time: "+"EST("+G.node[instances[i][j+1]]["name"]+")-EFT("+G.node[instances[i][j]]["name"]+")>0"
-    print idles
+                 idles += "\n Instance["+str(i)+"] constains idle time: "+"EST("+G.nodes[instances[i][j+1]]["name"]+")-EFT("+G.nodes[instances[i][j]]["name"]+")>0"
+    print(idles)
     return tot_idle
 
 def splitInstances( ):
     global G, instances
     new_instances = []
-    for i in xrange(0, len(instances)) :
+    for i in range(0, len(instances)) :
         if len(instances[i])>1:
            split_index = []
            split_instances = []
-           for j in xrange(0, len(instances[i])-1) :
+           for j in range(0, len(instances[i])-1) :
              comm_time = G[instances[i][j]][instances[i][j+1]]["throughput"]
-             idle_time = G.node[instances[i][j+1]]["EST"]-G.node[instances[i][j]]["EFT"]
+             idle_time = G.nodes[instances[i][j+1]]["EST"]-G.nodes[instances[i][j]]["EFT"]
              if idle_time>0 :
                  if idle_time>=comm_time :
                      split_index.append(j+1)
-                     print "split instance("+str(i)+") at index "+str(j+1)+" idle_time="+str(idle_time)+" througput="+str(comm_time)
+                     print("split instance("+str(i)+") at index "+str(j+1)+" idle_time="+str(idle_time)+" througput="+str(comm_time))
                      #adjust throughput
                      G[instances[i][j]][instances[i][j+1]]["throughput"] = idle_time
            if len(split_index)>0: 
                prev = 0
-               for k in xrange(0,len(split_index)):
+               for k in range(0,len(split_index)):
                    new_instances.append(instances[i][prev:split_index[k]])
                    prev = split_index[k]
                new_instances.append(instances[i][prev:])
@@ -243,7 +243,7 @@ def splitInstances( ):
             new_instances.append(instances[i])
     if len(new_instances)>0:
         instances = []
-        for i in xrange(0, len(new_instances)) :
+        for i in range(0, len(new_instances)) :
             instances.append(new_instances[i])
     adjustInstanceAttributes( )
     return
@@ -258,7 +258,7 @@ visited = []
 def graphAssignEST( d ):
     global visited
     visited = []
-    for i in xrange(0,number_of_nodes):
+    for i in range(0,number_of_nodes):
        visited.append(0)
     graphCalcEFT( d )
 
@@ -267,14 +267,14 @@ def graphCalcEFT( d ):
     global G, visited
 
     if verbose>1:
-        print "graphCalcEFT("+str(d)+")"
+        print("graphCalcEFT("+str(d)+")")
 
     if visited[d] == 1 :
-        return G.node[d]["EFT"]
+        return G.nodes[d]["EFT"]
 
     visited[d] = 1
-    nservice  = G.node[d]["Service"]
-    ninstance = G.node[d]["Instance"]
+    nservice  = G.nodes[d]["Service"]
+    ninstance = G.nodes[d]["Instance"]
 
     maxest = 0
    
@@ -282,22 +282,22 @@ def graphCalcEFT( d ):
     p_iter = G.predecessors( d )
     while True:
         try:
-            p = p_iter.next()
+            p = next(p_iter)
             predecessors.append(p)
         except StopIteration:
             break
     
     if verbose>1 :    
-        print "predecessors("+str(d)+"):",predecessors
+        print("predecessors("+str(d)+"):",predecessors)
     for p in predecessors :
-           pservice  = G.node[p]["Service"]
-           pinstance = G.node[p]["Instance"]
+           pservice  = G.nodes[p]["Service"]
+           pinstance = G.nodes[p]["Instance"]
 
            if verbose>1 :
-               print "a) graphCalcEFT( "+str(p)+" )"
+               print("a) graphCalcEFT( "+str(p)+" )")
            est = graphCalcEFT( p )
            if verbose>1 :
-               print "a) est="+str(est)+" <-graphCalcEFT( "+str(p)+" )"
+               print("a) est="+str(est)+" <-graphCalcEFT( "+str(p)+" )")
 
            lcost = G[p][d]["throughput"]
            
@@ -314,30 +314,30 @@ def graphCalcEFT( d ):
     # node with no parents has zero EST
     ceft = maxest
 
-    G.node[d]["EST"] = ceft
+    G.nodes[d]["EST"] = ceft
     if nservice == 0 :
-        ceft += G.node[d]["time1"]
+        ceft += G.nodes[d]["time1"]
     elif nservice == 1 :
-        ceft += G.node[d]["time1"]
+        ceft += G.nodes[d]["time1"]
     elif nservice == 2 :
-        ceft += G.node[d]["time2"]
+        ceft += G.nodes[d]["time2"]
     elif nservice == 3 :
-        ceft += G.node[d]["time3"]
+        ceft += G.nodes[d]["time3"]
     else:
-        ceft += G.node[d]["time1"]
+        ceft += G.nodes[d]["time1"]
        
-    G.node[d]["EFT"] = ceft
+    G.nodes[d]["EFT"] = ceft
 
     if verbose>1:
-        print G.node[d]["name"]+": EST="+str(G.node[d]["EST"]),",","EFT="+str(G.node[d]["EFT"])
+        print(G.nodes[d]["name"]+": EST="+str(G.nodes[d]["EST"]),",","EFT="+str(G.nodes[d]["EFT"]))
 
-    return G.node[d]["EFT"]
+    return G.nodes[d]["EFT"]
 
 
 def graphAssignLFT( d ):
     global visited
     visited = []
-    for i in xrange(0,number_of_nodes):
+    for i in range(0,number_of_nodes):
            visited.append(0)
     graphCalcLST( d )
 
@@ -345,7 +345,7 @@ def graphAssignLFT( d ):
 def graphAssignLFT( d ):
     global visited
     visited = []
-    for i in xrange(0,number_of_nodes):
+    for i in range(0,number_of_nodes):
            visited.append(0)
     graphCalcLST( d )
 
@@ -354,17 +354,17 @@ def graphCalcLST( d ):
     global G, visited
 
     if verbose>1:
-        print "graphCalcLST("+str(d)+")"
+        print("graphCalcLST("+str(d)+")")
 
     if visited[d] == 1 :
-        return G.node[d]["LST"]
+        return G.nodes[d]["LST"]
 
     if verbose>1 :
-        print "graphCalcLST("+str(d)+")"
+        print("graphCalcLST("+str(d)+")")
 
     visited[d] = 1
-    nservice  = G.node[d]["Service"]
-    ninstance = G.node[d]["Instance"]
+    nservice  = G.nodes[d]["Service"]
+    ninstance = G.nodes[d]["Instance"]
 
     minlft = deadline
 
@@ -372,21 +372,21 @@ def graphCalcLST( d ):
     c_iter = G.successors( d )
     while True:
         try:
-            c = c_iter.next()
+            c = next(c_iter)
             successors.append(c)
         except StopIteration:
             break
 
     for c in successors :
                       
-            cservice  = G.node[c]["Service"]
-            cinstance = G.node[c]["Instance"]
+            cservice  = G.nodes[c]["Service"]
+            cinstance = G.nodes[c]["Instance"]
 
             if verbose>1 :
-               print "a) graphCalcLST( "+str(c)+" )"
+               print("a) graphCalcLST( "+str(c)+" )")
             lft = graphCalcLST( c )
             if verbose>1 :
-               print "a) lft="+str(lft)+" <-graphCalcLST( "+str(c)+" )"
+               print("a) lft="+str(lft)+" <-graphCalcLST( "+str(c)+" )")
 
             lcost = G[d][c]["throughput"]
                                  
@@ -403,119 +403,119 @@ def graphCalcLST( d ):
 
     # node with no children has LFT equals deadline
     clft = minlft
-    G.node[d]["LFT"] = clft
+    G.nodes[d]["LFT"] = clft
     if nservice == 0 :
-        clft -= G.node[d]["time1"]
+        clft -= G.nodes[d]["time1"]
     elif nservice == 1 :
-        clft -= G.node[d]["time1"]
+        clft -= G.nodes[d]["time1"]
     elif nservice == 2 :
-        clft -= G.node[d]["time2"]
+        clft -= G.nodes[d]["time2"]
     elif nservice == 3 :
-        clft -= G.node[d]["time3"]
+        clft -= G.nodes[d]["time3"]
     else:
-        clft -= G.node[d]["time1"]
+        clft -= G.nodes[d]["time1"]
 
-    G.node[d]["LST"] = clft
+    G.nodes[d]["LST"] = clft
 
     if verbose>1:
-        print G.node[d]["name"]+": EST="+str(G.node[d]["LST"]),",","EFT="+str(G.node[d]["LFT"])
+        print(G.nodes[d]["name"]+": EST="+str(G.nodes[d]["LST"]),",","EFT="+str(G.nodes[d]["LFT"]))
 
-    return G.node[d]["LST"]
+    return G.nodes[d]["LST"]
 
 
 def printGraphTimes():
     trow = "\nname     "
-    for n in xrange(0,number_of_nodes):
-        trow += G.node[n]["name"]
+    for n in range(0,number_of_nodes):
+        trow += G.nodes[n]["name"]
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "VM       "
-    for n in xrange(0,number_of_nodes):
-        trow += str(G.node[n]["Service"])
+    for n in range(0,number_of_nodes):
+        trow += str(G.nodes[n]["Service"])
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "perf     "
-    for n in xrange(0,number_of_nodes):
-        vm = G.node[n]["Service"]
+    for n in range(0,number_of_nodes):
+        vm = G.nodes[n]["Service"]
         if vm == 3:
-            trow += str(G.node[n]["time3"])
+            trow += str(G.nodes[n]["time3"])
         elif vm == 2:
-            trow += str(G.node[n]["time2"])
+            trow += str(G.nodes[n]["time2"])
         else:
-            trow += str(G.node[n]["time1"])
+            trow += str(G.nodes[n]["time1"])
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "\nEST      "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["EST"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["EST"] )
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "EFT      "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["EFT"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["EFT"] )
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "LST      "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["LST"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["LST"] )
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "LFT      "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["LFT"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["LFT"] )
         trow += "  "
-    print trow+"\n"
+    print(trow+"\n")
 
     trow = "EFT-EST  "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["EFT"]-G.node[n]["EST"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["EFT"]-G.nodes[n]["EST"] )
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "LFT-LST  "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["LFT"]-G.node[n]["LST"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["LFT"]-G.nodes[n]["LST"] )
         trow += "  "
-    print trow+"\n"
+    print(trow+"\n")
 
 
 def printPerformances():
 
     trow = "\n    "
-    for n in xrange(0,number_of_nodes):
-        trow += G.node[n]["name"]
+    for n in range(0,number_of_nodes):
+        trow += G.nodes[n]["name"]
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "VM1 "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["time1"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["time1"] )
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "VM2 "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["time2"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["time2"] )
         trow += "  "
-    print trow
+    print(trow)
 
     trow = "VM3 "
-    for n in xrange(0,number_of_nodes):
-        trow += str( G.node[n]["time3"] )
+    for n in range(0,number_of_nodes):
+        trow += str( G.nodes[n]["time3"] )
         trow += "  "
 
-    print trow+"\n"
+    print(trow+"\n")
 
 
 def assignParents( d ):
    if verbose>0 :
-       print "\nassignParents("+G.node[d]["name"]+")"
+       print("\nassignParents("+G.nodes[d]["name"]+")")
    while hasUnassignedParents( d ) :
        pcp = []
        di = d
@@ -527,7 +527,7 @@ def assignParents( d ):
            di = cp
        cpath = ""
        for j in pcp :
-          cpath += " "+G.node[j]["name"]
+          cpath += " "+G.nodes[j]["name"]
 
        retval = assignPath( pcp )
        if retval == -1:
@@ -539,7 +539,7 @@ def assignParents( d ):
        #             G[pcp[j-1]][pcp[j]]["throughput"] = 0
 
        if verbose>0 :
-           print "\nPCP("+G.node[d]["name"]+"): ",cpath,"assigned"
+           print("\nPCP("+G.nodes[d]["name"]+"): ",cpath,"assigned")
 
        updateGraphTimes()
        if verbose>0 :
@@ -549,7 +549,7 @@ def assignParents( d ):
            #updateSuccessors( j )
            #updatePredecessors( j )
            #if verbose>0 :
-           #    print "Updated Successors and Predecessors of "+G.node[j]["name"]+" in path("+cpath+")"
+           #    print "Updated Successors and Predecessors of "+G.nodes[j]["name"]+" in path("+cpath+")"
            #    printGraphTimes( )
            assignParents( j )
    return
@@ -561,8 +561,8 @@ def hasUnassignedParents( d ):
     p_iter = G.predecessors(d)
     while True :
       try:
-        p = p_iter.next()
-        if G.node[p]["assigned"] == 0:
+        p = next(p_iter)
+        if G.nodes[p]["assigned"] == 0:
             unassigned += 1
       except StopIteration:
         break
@@ -578,8 +578,8 @@ def hasUnassignedChildren( d ):
     c_iter = G.successors(d)
     while True :
       try:
-        c = c_iter.next()
-        if G.node[c]["assigned"] == 0:
+        c = next(c_iter)
+        if G.nodes[c]["assigned"] == 0:
             unassigned += 1
       except StopIteration:
         break
@@ -592,13 +592,13 @@ def hasUnassignedChildren( d ):
 def getCriticalParent( d ):                 
     max_time = 0
     cp = -1
-    d_est = G.node[d]["EST"]
+    d_est = G.nodes[d]["EST"]
     p_iter = G.predecessors(d)
     while True :
       try:
-        p = p_iter.next()
-        if G.node[p]["assigned"] == 0 :
-            ctime = G.node[p]["EFT"]
+        p = next(p_iter)
+        if G.nodes[p]["assigned"] == 0 :
+            ctime = G.nodes[p]["EFT"]
             ctime += G[p][d]["throughput"]
             if ctime >= max_time :
                 max_time = ctime
@@ -625,13 +625,13 @@ def assignPath( p ):
     global G,instances,n_service1_inst,n_service2_inst,n_service3_inst
 
     if len(p) == 0 :  
-        print "Zero path len: no assignment possible"
+        print("Zero path len: no assignment possible")
         return -1
                    
     p_len = len(p)
     p_str = "path:"
     for j in p :
-      p_str += " "+G.node[j]["name"]
+      p_str += " "+G.nodes[j]["name"]
 
     p_cas = -1
     p_cost = 2*number_of_nodes*prices[0]
@@ -639,11 +639,11 @@ def assignPath( p ):
     prop_cas = getCheapestAssignment( p )
     if prop_cas == 0 : 
         if verbose> 0 :
-            print "no pre assignment found for: ",p_str
+            print("no pre assignment found for: ",p_str)
     elif prop_cas>0 :
         p_cas = prop_cas
         if verbose> 0 :
-            print "pre assignment "+str(p_cas)+" for path ",p_str
+            print("pre assignment "+str(p_cas)+" for path ",p_str)
     
     if p_cas>0:
        p_time = getInstanceTime( p_cas, p )
@@ -658,10 +658,10 @@ def assignPath( p ):
     best_inst_cas = -1
     best_inst_cost = 2*number_of_nodes*prices[0]
     if len(instances)>0 :
-        for i in xrange(0, len(instances)) :
+        for i in range(0, len(instances)) :
           inst_len = len(instances[i])
           if (p[0] in G.successors(instances[i][inst_len-1])) or (p[p_len-1] in G.predecessors(instances[i][0])):
-            inst_cas = G.node[instances[i][0]]["Service"]
+            inst_cas = G.nodes[instances[i][0]]["Service"]
             inst_time = getInstanceTime( inst_cas, instances[i] )
             inst_cost = -1
             if inst_cas == 1 :
@@ -671,15 +671,15 @@ def assignPath( p ):
             elif inst_cas == 3 :
                 inst_cost = inst_time*prices[2]
             new_inst = []
-            if G.node[p[0]]["EST"]>=G.node[instances[i][inst_len-1]]["EFT"]:
-                for j in xrange(0,inst_len):
+            if G.nodes[p[0]]["EST"]>=G.nodes[instances[i][inst_len-1]]["EFT"]:
+                for j in range(0,inst_len):
                     new_inst.append(instances[i][j])
-                for j in xrange(0,p_len):
+                for j in range(0,p_len):
                     new_inst.append(p[j])
-            elif G.node[p[p_len-1]]["EFT"]<=G.node[instances[i][0]]["EST"]:
-                for j in xrange(0,p_len):
+            elif G.nodes[p[p_len-1]]["EFT"]<=G.nodes[instances[i][0]]["EST"]:
+                for j in range(0,p_len):
                     new_inst.append(p[j])
-                for j in xrange(0,inst_len):
+                for j in range(0,inst_len):
                     new_inst.append(instances[i][j])
             # prop_cas may differ inst_cas of old instance !
             prop_cas = getCheapestAssignment( new_inst )
@@ -694,99 +694,99 @@ def assignPath( p ):
                     new_inst_cost = new_inst_time*prices[2]
                 if p_cas == -1:
                     if verbose>0 :
-                        print "check extended instance",new_inst,"with prop_cas="+str(prop_cas)
-                        print "new_inst_cost="+str(new_inst_cost),"<","best_inst_cost="+str(best_inst_cost)+"?:",
+                        print("check extended instance",new_inst,"with prop_cas="+str(prop_cas))
+                        print("new_inst_cost="+str(new_inst_cost),"<","best_inst_cost="+str(best_inst_cost)+"?:", end=' ')
                     if new_inst_cost<best_inst_cost:
                         best_inst = i
                         best_inst_cas = prop_cas
                         best_inst_cost = new_inst_cost
                         if verbose>0 :
-                            print "Yes"
+                            print("Yes")
                     else:
                         if verbose>0 :
-                            print "No"
+                            print("No")
                 else:
                     if verbose>0 :
-                        print "check extended instance",new_inst,"with prop_cas="+str(prop_cas)
-                        print "new_inst_cost="+str(new_inst_cost),"<=","(inst_cost="+str(inst_cost)+"+p_cost="+str(p_cost)+")?:",
+                        print("check extended instance",new_inst,"with prop_cas="+str(prop_cas))
+                        print("new_inst_cost="+str(new_inst_cost),"<=","(inst_cost="+str(inst_cost)+"+p_cost="+str(p_cost)+")?:", end=' ')
                     if new_inst_cost<=(inst_cost+p_cost):
                         if verbose>0 :
-                            print "Yes"
+                            print("Yes")
                         if verbose>0 :
-                            print "new_inst_cost="+str(new_inst_cost),"<","best_inst_cost="+str(best_inst_cost)+"?:",
+                            print("new_inst_cost="+str(new_inst_cost),"<","best_inst_cost="+str(best_inst_cost)+"?:", end=' ')
                         if new_inst_cost<best_inst_cost:
                             best_inst = i
                             best_inst_cas = prop_cas
                             best_inst_cost = new_inst_cost
                             if verbose>0 :
-                                print "Yes"
+                                print("Yes")
                         else:
                             if verbose>0:
-                                print "No"
+                                print("No")
                     else:
                         if verbose>0:
-                            print "No"
+                            print("No")
                      
     # prefer old instance
     if best_inst>=0 :
         best_inst_len = len(instances[best_inst])
-        old_inst_cas = G.node[instances[best_inst][0]]["Service"]
-        old_inst_est = G.node[instances[best_inst][0]]["EST"]
-        old_inst_lft = G.node[instances[best_inst][best_inst_len-1]]["LFT"]
+        old_inst_cas = G.nodes[instances[best_inst][0]]["Service"]
+        old_inst_est = G.nodes[instances[best_inst][0]]["EST"]
+        old_inst_lft = G.nodes[instances[best_inst][best_inst_len-1]]["LFT"]
         # best_inst_cas may differ form old_inst_cas
         if best_inst_cas != old_inst_cas:
-            for j in xrange(0,best_inst_len):
-                G.node[instances[best_inst][j]]["Service"] = best_inst_cas
+            for j in range(0,best_inst_len):
+                G.nodes[instances[best_inst][j]]["Service"] = best_inst_cas
             if verbose>0:
-                print "adjustInstanceAttributes due to new assignment of instance",str(best_inst)
+                print("adjustInstanceAttributes due to new assignment of instance",str(best_inst))
             adjustInstanceAttributes( )
-        best_inst_num = G.node[instances[best_inst][0]]["Instance"]
+        best_inst_num = G.nodes[instances[best_inst][0]]["Instance"]
         add_before = False
-        if G.node[p[0]]["EST"]>=G.node[instances[best_inst][best_inst_len-1]]["EFT"]:
+        if G.nodes[p[0]]["EST"]>=G.nodes[instances[best_inst][best_inst_len-1]]["EFT"]:
             if verbose>0 :
-                print "add path at end of old instance "+str(best_inst),"of Service "+str(best_inst_cas)
-            for j in xrange(0,p_len):
+                print("add path at end of old instance "+str(best_inst),"of Service "+str(best_inst_cas))
+            for j in range(0,p_len):
                 instances[best_inst].append(p[j])
         else:
             add_before = True
             if verbose>0 :
-                print "add path at begin of old instance "+str(best_inst),"of Service "+str(best_inst_cas)
-            for j in xrange(0,p_len):
+                print("add path at begin of old instance "+str(best_inst),"of Service "+str(best_inst_cas))
+            for j in range(0,p_len):
                 k = p_len-1-j
                 instances[best_inst].insert(0, p[k])
         for j in p:
-            G.node[j]["Service"]  = best_inst_cas
-            G.node[j]["Instance"] = best_inst_num
-            G.node[j]["assigned"] = 1
+            G.nodes[j]["Service"]  = best_inst_cas
+            G.nodes[j]["Instance"] = best_inst_num
+            G.nodes[j]["assigned"] = 1
             if best_inst_cas == 1 :
-                G.node[j]["time"] = G.node[j]["time1"]
+                G.nodes[j]["time"] = G.nodes[j]["time1"]
             elif best_inst_cas == 2 :
-                G.node[j]["time"] = G.node[j]["time2"]    
+                G.nodes[j]["time"] = G.nodes[j]["time2"]    
             elif best_inst_cas == 3 :
-                G.node[j]["time"] = G.node[j]["time3"]
+                G.nodes[j]["time"] = G.nodes[j]["time3"]
 
         est = old_inst_est
         # adjust EST
         if add_before :
-            est = G.node[p[0]]["EST"]
+            est = G.nodes[p[0]]["EST"]
         for j in instances[best_inst]:
-            G.node[j]["EST"] = est
-            est += G.node[j]["time"]
-            G.node[j]["EFT"] = est
+            G.nodes[j]["EST"] = est
+            est += G.nodes[j]["time"]
+            G.nodes[j]["EFT"] = est
         # adjust LFT
-        lft = G.node[p[p_len-1]]["LFT"] 
+        lft = G.nodes[p[p_len-1]]["LFT"] 
         if add_before :
             lft = old_inst_lft
-        for j in xrange(0,len(instances[best_inst])):
+        for j in range(0,len(instances[best_inst])):
             k = len(instances[best_inst])-1-j
-            G.node[instances[best_inst][k]]["LFT"] = lft
-            lft -= G.node[instances[best_inst][k]]["time"]
-            G.node[instances[best_inst][k]]["LST"] = lft
+            G.nodes[instances[best_inst][k]]["LFT"] = lft
+            lft -= G.nodes[instances[best_inst][k]]["time"]
+            G.nodes[instances[best_inst][k]]["LST"] = lft
 
         return 1
     elif p_cas>0 :
         if verbose>0 :
-            print "add path to new instance ",str(len(instances)),"of Service "+str(p_cas)
+            print("add path to new instance ",str(len(instances)),"of Service "+str(p_cas))
         inst_num = -1
         new_instance = []
         for i in p :
@@ -802,35 +802,35 @@ def assignPath( p ):
             n_service3_inst += 1 
             inst_num = n_service3_inst    
         for j in p:
-            G.node[j]["Service"]  = p_cas
-            G.node[j]["Instance"] = inst_num
-            G.node[j]["assigned"] = 1
+            G.nodes[j]["Service"]  = p_cas
+            G.nodes[j]["Instance"] = inst_num
+            G.nodes[j]["assigned"] = 1
             if p_cas == 1 :
-                G.node[j]["time"] = G.node[j]["time1"]
+                G.nodes[j]["time"] = G.nodes[j]["time1"]
             elif p_cas == 2 :
-                G.node[j]["time"] = G.node[j]["time2"]    
+                G.nodes[j]["time"] = G.nodes[j]["time2"]    
             elif p_cas == 3 :
-                G.node[j]["time"] = G.node[j]["time3"]
+                G.nodes[j]["time"] = G.nodes[j]["time3"]
 
         #for j in p:
-        #   print G.node[j]["name"],": assigned="+str(G.node[j]["assigned"]),"Service="+str(G.node[j]["Service"]),"Instance="+str(G.node[j]["Instance"]),"time="+str(G.node[j]["time"]),"EST="+str(G.node[j]["EST"]),"EFT="+str(G.node[j]["EFT"]),"LST="+str(G.node[j]["LST"]),"LFT="+str(G.node[j]["LFT"])
+        #   print G.nodes[j]["name"],": assigned="+str(G.nodes[j]["assigned"]),"Service="+str(G.nodes[j]["Service"]),"Instance="+str(G.nodes[j]["Instance"]),"time="+str(G.nodes[j]["time"]),"EST="+str(G.nodes[j]["EST"]),"EFT="+str(G.nodes[j]["EFT"]),"LST="+str(G.nodes[j]["LST"]),"LFT="+str(G.nodes[j]["LFT"])
 
-        est = G.node[p[0]]["EST"]
+        est = G.nodes[p[0]]["EST"]
         for j in p:
-            G.node[j]["EST"] = est
-            est += G.node[j]["time"]
-            G.node[j]["EFT"] = est
+            G.nodes[j]["EST"] = est
+            est += G.nodes[j]["time"]
+            G.nodes[j]["EFT"] = est
         # adjust LFT
-        lft = G.node[p[p_len-1]]["LFT"] 
-        for j in xrange(0,len(p)):
+        lft = G.nodes[p[p_len-1]]["LFT"] 
+        for j in range(0,len(p)):
             k = len(p)-1-j
-            G.node[p[k]]["LFT"] = lft
-            lft -= G.node[p[k]]["time"]
-            G.node[p[k]]["LST"] = lft
+            G.nodes[p[k]]["LFT"] = lft
+            lft -= G.nodes[p[k]]["time"]
+            G.nodes[p[k]]["LST"] = lft
 
         return 1            
     else:         
-        print "assignment failed for path",p_str
+        print("assignment failed for path",p_str)
         return -1
 
           
@@ -857,10 +857,10 @@ def getCheapestAssignment( p ) :
 
     p_str = "path:"
     for j in p :
-        p_str += " "+G.node[j]["name"]
+        p_str += " "+G.nodes[j]["name"]
 
     if verbose>0 :
-        print "getCheapestAssignment("+p_str+")"
+        print("getCheapestAssignment("+p_str+")")
                           
     # get min LST of children of p
     dominant_childs = []
@@ -873,14 +873,14 @@ def getCheapestAssignment( p ) :
  
     if verbose>0 :
         d_childs = ""
-        for i in xrange(0, len(dominant_childs) ):
-            d_childs += " "+G.node[dominant_childs[i]]["name"]+":"+str(lft_limits[i])
-        print "lft_limits dominant childs:"+d_childs
+        for i in range(0, len(dominant_childs) ):
+            d_childs += " "+G.nodes[dominant_childs[i]]["name"]+":"+str(lft_limits[i])
+        print("lft_limits dominant childs:"+d_childs)
 
         d_parents = ""
-        for i in xrange(0, len(dominant_parents) ):
-            d_parents += " "+G.node[dominant_parents[i]]["name"]+":"+str(est_limits[i])
-        print "est_limits dominant parents:"+d_parents
+        for i in range(0, len(dominant_parents) ):
+            d_parents += " "+G.nodes[dominant_parents[i]]["name"]+":"+str(est_limits[i])
+        print("est_limits dominant parents:"+d_parents)
 
     new_best_cas  = 0
     new_best_cost = 0
@@ -901,13 +901,13 @@ def getCheapestAssignment( p ) :
 
     if new_best_cas>0 :
         if verbose>0 :
-            print "proposal assignment "+str(new_best_cas)+"("+str(new_instance_time)+") for "+p_str
+            print("proposal assignment "+str(new_best_cas)+"("+str(new_instance_time)+") for "+p_str)
     else:
         if verbose>0 :
-            print "proposal assignment "+str(new_best_cas)+" for "+p_str
+            print("proposal assignment "+str(new_best_cas)+" for "+p_str)
                       
     if verbose>0 :        
-        print "cheapest assignment "+str(new_best_cas)+" for "+p_str
+        print("cheapest assignment "+str(new_best_cas)+" for "+p_str)
 
     return new_best_cas
 
@@ -924,12 +924,12 @@ def determineClusterLimits( p, q ) :
         d_node = -1
         while True :
           try:
-                j = c_iter.next()
+                j = next(c_iter)
                 num_children += 1
                 lft_p = 0
                 # child must be outside both clusters
                 if (not inCluster( j, p )) and (not inCluster( j, q )) :
-                  lft_p = G.node[j]["LST"]
+                  lft_p = G.nodes[j]["LST"]
                   lput = G[i][j]["throughput"]
                   lft_p -= lput
                   if lft_p<min_lft_p :
@@ -940,9 +940,9 @@ def determineClusterLimits( p, q ) :
        
         if num_children == 0 :
             # i has no children
-            lft_limits.append( G.node[i]["LFT"] )
+            lft_limits.append( G.nodes[i]["LFT"] )
             dominant_childs.append( i )
-            #print "  a) lft_limits <-","t"+str(i)+"("+str( G.node[i]["LFT"] )+")"
+            #print "  a) lft_limits <-","t"+str(i)+"("+str( G.nodes[i]["LFT"] )+")"
         else:              
             if min_lft_p<2*deadline :
                 lft_limits.append( min_lft_p )
@@ -950,9 +950,9 @@ def determineClusterLimits( p, q ) :
                 #print "  b) lft_limits <-","t"+str(d_node)+"("+str( min_lft_p )+")"
             else :
                 # i has no children outside p, and does not play a role in the checks
-                lft_limits.append( G.node[ p[len(p)-1] ]["LFT"] )
+                lft_limits.append( G.nodes[ p[len(p)-1] ]["LFT"] )
                 dominant_childs.append( p[len(p)-1] )
-                #print "  c) lft_limits <-","t"+str(G.node[ p[len(p)-1] ]["name"])+"("+str( G.node[ p[len(p)-1] ]["LFT"] )+")"                                  
+                #print "  c) lft_limits <-","t"+str(G.nodes[ p[len(p)-1] ]["name"])+"("+str( G.nodes[ p[len(p)-1] ]["LFT"] )+")"                                  
 
        
         num_parents = 0
@@ -963,12 +963,12 @@ def determineClusterLimits( p, q ) :
         
         while True :
           try:
-                j = p_iter.next()
+                j = next(p_iter)
                 num_parents += 1
                 est_p = 0
                 # parent must be outside both clusters
                 if (not inCluster( j, p )) and (not inCluster( j, q )) :
-                  est_p = G.node[j]["EFT"]
+                  est_p = G.nodes[j]["EFT"]
                   lput = G[j][i]["throughput"]  
                   est_p += lput
                   if est_p>max_est_p:
@@ -979,7 +979,7 @@ def determineClusterLimits( p, q ) :
 
         if num_parents == 0 :
             # i has no parents
-            est_limits.append( G.node[i]["EST"] )
+            est_limits.append( G.nodes[i]["EST"] )
             dominant_parents.append( i )
         else:               
             if max_est_p > 0 :
@@ -987,102 +987,102 @@ def determineClusterLimits( p, q ) :
                 dominant_parents.append( d_node  )              
             else :
                 # i has no parents outside p, and does not play a role in the checks
-                est_limits.append( G.node[ p[0] ]["EST"] )
+                est_limits.append( G.nodes[ p[0] ]["EST"] )
                 dominant_parents.append( p[0] )
 
 
 def checkClusterLimits( l, p ) :
 
     p_len = len(p)
-    lft_p = G.node[ p[p_len-1] ]["LFT"]
-    est_p = G.node[p[0]]["EST"]
+    lft_p = G.nodes[ p[p_len-1] ]["LFT"]
+    est_p = G.nodes[p[0]]["EST"]
     
     if verbose>0 :
-      print "checkClusterLimits for service "+str(l)
+      print("checkClusterLimits for service "+str(l))
 
     possible = True
     
     # R1
     incr_inst_time = 0
-    for i in xrange(0,len(p)) :
+    for i in range(0,len(p)) :
 
         pi_time = 0
         if l==1 :
-            pi_time = G.node[p[i]]["time1"]
+            pi_time = G.nodes[p[i]]["time1"]
         elif l==2 :
-            pi_time = G.node[p[i]]["time2"]
+            pi_time = G.nodes[p[i]]["time2"]
         elif l==3 :
-            pi_time = G.node[p[i]]["time3"]
+            pi_time = G.nodes[p[i]]["time3"]
         else:
-            pi_time = G.node[p[i]]["time1"]
+            pi_time = G.nodes[p[i]]["time1"]
 
         incr_inst_time += pi_time
         
         inst_eft = est_p + incr_inst_time
         if verbose>0 :
-            print "R1: p["+str(i)+"]="+G.node[p[i]]["name"]+": inst_eft="+str(inst_eft)+">LFT("+str(G.node[p[i]]["name"])+")="+str(G.node[p[i]]["LFT"])+"?",
-        if inst_eft>G.node[p[i]]["LFT"] :
+            print("R1: p["+str(i)+"]="+G.nodes[p[i]]["name"]+": inst_eft="+str(inst_eft)+">LFT("+str(G.nodes[p[i]]["name"])+")="+str(G.nodes[p[i]]["LFT"])+"?", end=' ')
+        if inst_eft>G.nodes[p[i]]["LFT"] :
             if verbose>0 :
-                print " Yes"
+                print(" Yes")
             possible = False
             return possible  
         else:
             if verbose>0 :
-                print " No"
+                print(" No")
 
     incr_inst_time = 0
-    for i in xrange(0,len(p)) :
+    for i in range(0,len(p)) :
         
         if verbose>0 :
-            print "R2 p["+str(i)+"]="+G.node[p[i]]["name"]+": (p[0].EST="+str(G.node[p[0]]["EST"])+"+inst_time("+str(l)+")="+str(incr_inst_time)+") < est_limits["+str(i)+"]="+str(est_limits[i])+"(parent "+G.node[dominant_parents[i]]["name"]+")?",
+            print("R2 p["+str(i)+"]="+G.nodes[p[i]]["name"]+": (p[0].EST="+str(G.nodes[p[0]]["EST"])+"+inst_time("+str(l)+")="+str(incr_inst_time)+") < est_limits["+str(i)+"]="+str(est_limits[i])+"(parent "+G.nodes[dominant_parents[i]]["name"]+")?", end=' ')
         inst_time = est_p + incr_inst_time
         if inst_time < est_limits[i] :
             if verbose>0 :
-                print " Yes"
+                print(" Yes")
             possible = False
             return possible  
         else:
             if verbose>0 :
-                print " No"
+                print(" No")
                             
         pi_time = 0
         if l==1 :
-            pi_time = G.node[p[i]]["time1"]
+            pi_time = G.nodes[p[i]]["time1"]
         elif l==2 :
-            pi_time = G.node[p[i]]["time2"]
+            pi_time = G.nodes[p[i]]["time2"]
         elif l==3 :
-            pi_time = G.node[p[i]]["time3"]
+            pi_time = G.nodes[p[i]]["time3"]
         else:
-            pi_time = G.node[p[i]]["time1"]
+            pi_time = G.nodes[p[i]]["time1"]
 
         incr_inst_time += pi_time
  
     #return possible
 
     incr_inst_time = 0
-    for i in xrange(0,len(p)) :
+    for i in range(0,len(p)) :
         j = len(p)-1-i
         if verbose>0 :
-            print "R3 p["+str(j)+"]="+G.node[p[j]]["name"]+": lft_p="+str(lft_p)+"-inst_time("+str(l)+")="+str(incr_inst_time)+" >lft_limits["+str(j)+"]="+str(lft_limits[j])+"(child "+G.node[dominant_childs[j]]["name"]+")?",
+            print("R3 p["+str(j)+"]="+G.nodes[p[j]]["name"]+": lft_p="+str(lft_p)+"-inst_time("+str(l)+")="+str(incr_inst_time)+" >lft_limits["+str(j)+"]="+str(lft_limits[j])+"(child "+G.nodes[dominant_childs[j]]["name"]+")?", end=' ')
         inst_time = lft_p - incr_inst_time
         if inst_time > lft_limits[j] :
             possible = False
             if verbose>0 :
-                print " Yes"
+                print(" Yes")
             return possible
         else:
             if verbose>0 :
-                print " No"
+                print(" No")
 
         pi_time = 0
         if l==1 :
-          pi_time = G.node[p[j]]["time1"]
+          pi_time = G.nodes[p[j]]["time1"]
         elif l==2 :
-          pi_time = G.node[p[j]]["time2"]
+          pi_time = G.nodes[p[j]]["time2"]
         elif l==3 :
-          pi_time = G.node[p[j]]["time3"]
+          pi_time = G.nodes[p[j]]["time3"]
         else:
-          pi_time = G.node[p[j]]["time1"]
+          pi_time = G.nodes[p[j]]["time1"]
 
         incr_inst_time += pi_time
 
@@ -1096,11 +1096,11 @@ def getInstanceTime( c, p ):
         inst_time = 0
         for i in p :
            if c == 1 :                    
-               inst_time +=  G.node[i]["time1"]
+               inst_time +=  G.nodes[i]["time1"]
            elif c == 2 :
-               inst_time +=  G.node[i]["time2"]
+               inst_time +=  G.nodes[i]["time2"]
            elif c == 3 :
-               inst_time +=  G.node[i]["time3"]
+               inst_time +=  G.nodes[i]["time3"]
            else:
                inst_time +=  deadline
                      
@@ -1110,13 +1110,13 @@ def inCluster( p, cluster ) :
                       
     if len(cluster)>0 :
         for i in cluster :
-            if G.node[p]["name"] == G.node[i]["name"] :
+            if G.nodes[p]["name"] == G.nodes[i]["name"] :
                 return True           
     return False
 
 
 def getInstanceNumber( p ):
-    for i in xrange(0,len(instances)) :
+    for i in range(0,len(instances)) :
         for j in instances[i] :
             if p == j :
                 return i               
@@ -1128,8 +1128,8 @@ def adjustInstanceAttributes( ):
     n_service1_inst = 0
     n_service2_inst = 0
     n_service3_inst = 0
-    for i in xrange(0,len(instances)):
-      service = G.node[instances[i][0]]["Service"]
+    for i in range(0,len(instances)):
+      service = G.nodes[instances[i][0]]["Service"]
       inst_num = -1
       if service == 1:
          n_service1_inst += 1 
@@ -1140,8 +1140,8 @@ def adjustInstanceAttributes( ):
       if service == 3:
          n_service3_inst += 1 
          inst_num = n_service3_inst
-      for j in xrange(0,len(instances[i])):
-          G.node[instances[i][j]]["Instance"] = inst_num      
+      for j in range(0,len(instances[i])):
+          G.nodes[instances[i][j]]["Instance"] = inst_num      
 
 
 def updateSuccessors( p ):
@@ -1153,21 +1153,21 @@ def updateSuccessors( p ):
         c_iter = G.successors(p)
         while True :
           try:
-            c = c_iter.next()
+            c = next(c_iter)
             successors.append(c)
           except StopIteration:
             break 
         for c in successors :
-            #if G.node[c]["assigned"] == 0 or (G.node[c]["time1"]==0 and G.node[c]["time2"]==0 and G.node[c]["time3"]==0):
-            if G.node[c]["assigned"] == 0 :
-                ctime = G.node[p]["EFT"]      
+            #if G.nodes[c]["assigned"] == 0 or (G.nodes[c]["time1"]==0 and G.nodes[c]["time2"]==0 and G.nodes[c]["time3"]==0):
+            if G.nodes[c]["assigned"] == 0 :
+                ctime = G.nodes[p]["EFT"]      
                 ctime += G[p][c]["throughput"]              
                        
                 # see 1.16.2.4 this depends on the number of assigned parents
                 # as updates proceeds from entry node to exit node, skip if statement
-                #if ctime>G.node[c]["EST"] :
-                G.node[c]["EST"] = ctime
-                G.node[c]["EFT"] = ctime + G.node[c]["time1"]
+                #if ctime>G.nodes[c]["EST"] :
+                G.nodes[c]["EST"] = ctime
+                G.nodes[c]["EFT"] = ctime + G.nodes[c]["time1"]
                 updateSuccessors( c )
                            
                           
@@ -1178,48 +1178,48 @@ def updatePredecessors( c ):
         p_iter = G.predecessors(c)
         while True :
           try:
-            p = p_iter.next()
+            p = next(p_iter)
             predecessors.append(p)
           except StopIteration:
             break 
         for p in predecessors :
-            #if G.node[p]["assigned"] == 0 or (G.node[p]["time1"]==0 and G.node[p]["time2"]==0 and G.node[p]["time3"]==0):
-            if G.node[p]["assigned"] == 0 :
-                ctime = G.node[c]["LFT"]
-                if G.node[c]["assigned"] == 1 :
-                    ctime -= G.node[c]["time"]
+            #if G.nodes[p]["assigned"] == 0 or (G.nodes[p]["time1"]==0 and G.nodes[p]["time2"]==0 and G.nodes[p]["time3"]==0):
+            if G.nodes[p]["assigned"] == 0 :
+                ctime = G.nodes[c]["LFT"]
+                if G.nodes[c]["assigned"] == 1 :
+                    ctime -= G.nodes[c]["time"]
                 else: 
-                    ctime -= G.node[c]["time1"]
+                    ctime -= G.nodes[c]["time1"]
 
                 ctime -= G[p][c]["throughput"]
                      
                 # see 1.16.2.4 this depends on the number of assigned children
                 # skip if statement       
-                #if ctime<G.node[p]["LFT"] :
-                G.node[p]["LFT"] = ctime
-                G.node[p]["LST"] = ctime - G.node[p]["time1"]
+                #if ctime<G.nodes[p]["LFT"] :
+                G.nodes[p]["LFT"] = ctime
+                G.nodes[p]["LST"] = ctime - G.nodes[p]["time1"]
                 updatePredecessors( p )
 
    
 def updateNode( n ):
-    nservice  = G.node[n]["Service"]
-    ninstance = G.node[n]["Instance"]
+    nservice  = G.nodes[n]["Service"]
+    ninstance = G.nodes[n]["Instance"]
  
     predecessors = []
     p_iter = G.predecessors(n)
     while True :
       try:
-        p = p_iter.next()
+        p = next(p_iter)
         predecessors.append(p)
       except StopIteration:
         break  
 
     maxest = 0
     for p in predecessors :
-       pservice  = G.node[p]["Service"];
-       pinstance = G.node[p]["Instance"];
+       pservice  = G.nodes[p]["Service"];
+       pinstance = G.nodes[p]["Instance"];
 
-       est = G.node[p]["EFT"]
+       est = G.nodes[p]["EFT"]
        lcost = G[p][n]["throughput"]
        if pservice == pservice :
            if pinstance == -1 or pinstance == -1 or pinstance != pinstance :
@@ -1230,33 +1230,33 @@ def updateNode( n ):
        if est>maxest :
            maxest = est
 
-    G.node[n]["EST"] = maxest
-    G.node[n]["EFT"] = maxest
+    G.nodes[n]["EST"] = maxest
+    G.nodes[n]["EFT"] = maxest
     if nservice == 1 :                    
-        G.node[n]["EFT"] +=  G.node[n]["time1"]
+        G.nodes[n]["EFT"] +=  G.nodes[n]["time1"]
     elif nservice == 2 :
-        G.node[n]["EFT"] += G.node[n]["time2"]
+        G.nodes[n]["EFT"] += G.nodes[n]["time2"]
     elif nservice == 3 :
-        G.node[n]["EFT"] += G.node[n]["time3"]
+        G.nodes[n]["EFT"] += G.nodes[n]["time3"]
     else:
-        G.node[n]["EFT"] +=  G.node[n]["time1"]
+        G.nodes[n]["EFT"] +=  G.nodes[n]["time1"]
 
 
     successors = []
     p_iter = G.successors(n)
     while True :
       try:
-        p = p_iter.next()
+        p = next(p_iter)
         successors.append(p)
       except StopIteration:
         break  
 
     minlft = deadline
     for c in successors :
-       cservice  = G.node[c]["Service"];
-       cinstance = G.node[c]["Instance"];
+       cservice  = G.nodes[c]["Service"];
+       cinstance = G.nodes[c]["Instance"];
 
-       lft = G.node[c]["LST"]
+       lft = G.nodes[c]["LST"]
        lcost = G[n][c]["throughput"]
        if cservice == nservice :
            if cinstance == -1 or ninstance == -1 or cinstance != ninstance :
@@ -1267,16 +1267,16 @@ def updateNode( n ):
        if lft<minlft :
            minlft = lft
 
-    G.node[n]["LFT"] = minlft
-    G.node[n]["LST"] = minlft
+    G.nodes[n]["LFT"] = minlft
+    G.nodes[n]["LST"] = minlft
     if nservice == 1 :                    
-        G.node[n]["LST"] -=  G.node[n]["time1"]
+        G.nodes[n]["LST"] -=  G.nodes[n]["time1"]
     elif nservice == 2 :
-        G.node[n]["LST"] -= G.node[n]["time2"]
+        G.nodes[n]["LST"] -= G.nodes[n]["time2"]
     elif nservice == 3 :
-        G.node[n]["LST"] -= G.node[n]["time3"]
+        G.nodes[n]["LST"] -= G.nodes[n]["time3"]
     else:
-        G.node[n]["LST"] -=  G.node[n]["time1"]
+        G.nodes[n]["LST"] -=  G.nodes[n]["time1"]
 
 total_cost = 0
                    
@@ -1285,8 +1285,8 @@ def printResult( ):
 
     rstr = "\nPCP solution for task graph with "+str(number_of_nodes)+" nodes"
     if verbose>0 :
-        for d in xrange(0,number_of_nodes) :
-            rstr += "  S:"+str(G.node[d]["Service"])+","+str(G.node[d]["Instance"])
+        for d in range(0,number_of_nodes) :
+            rstr += "  S:"+str(G.nodes[d]["Service"])+","+str(G.nodes[d]["Instance"])
         rstr += "\n"
 
     total_cost = 0
@@ -1308,10 +1308,10 @@ def printResult( ):
           if len(inst)>0:
             linst = len(inst)
             nodes_in_inst += linst
-            serv = G.node[inst[0]]["Service"]
-            ninst = G.node[inst[0]]["Instance"]
-            est = G.node[inst[0]]["EST"]
-            eft = G.node[inst[linst-1]]["EFT"]
+            serv = G.nodes[inst[0]]["Service"]
+            ninst = G.nodes[inst[0]]["Instance"]
+            est = G.nodes[inst[0]]["EST"]
+            eft = G.nodes[inst[linst-1]]["EFT"]
             duration = eft -est
             rstr += "\nS"+str(serv)+","+str(ninst)
             rstr += "   "+str(est)+"    "+str(eft)+"    "+str(duration)
@@ -1337,37 +1337,37 @@ def printResult( ):
             rstr += "    "+str(cost)
             tasklist = ""
             if verbose>0 :  
-                for k in xrange(0,linst) :
+                for k in range(0,linst) :
                     if k>0 :
                         tasklist += ", "
-                    tasklist += G.node[inst[k]]["name"]
+                    tasklist += G.nodes[inst[k]]["name"]
             else:
-                for k in xrange(0,linst) :
+                for k in range(0,linst) :
                     if k>0 :
                         tasklist += ", "
-                    tasklist += G.node[inst[k]]["name"]
+                    tasklist += G.nodes[inst[k]]["name"]
                 #rstr += "    "+str(linst)              
             rstr += "    "+tasklist
-        print rstr
+        print(rstr)
         tot_non_inst = 0
         extra_cost = 0
-        print "\ntotal instance cost: "+str(total_cost)
+        print("\ntotal instance cost: "+str(total_cost))
         if( nodes_in_inst != number_of_nodes ) :
            nonp = getNonInstanceNodes(   )
            nonstr = ""
 
-           for j in xrange(0,number_of_nodes):
+           for j in range(0,number_of_nodes):
                if nonp[j]==0 :
-                   nonstr += ","+G.node[j]["name"]
-                   extra_cost += G.node[j]["time1"]*prices[0]
+                   nonstr += ","+G.nodes[j]["name"]
+                   extra_cost += G.nodes[j]["time1"]*prices[0]
                    tot_non_inst += 1
-           print "\nnon instance nodes: n="+str(tot_non_inst)+" "+nonstr[1:]+" with extra cost: "+str(extra_cost)
+           print("\nnon instance nodes: n="+str(tot_non_inst)+" "+nonstr[1:]+" with extra cost: "+str(extra_cost))
            total_cost += extra_cost
         tot_idle = checkIdleTime()
         if tot_idle>0:
-            print "\nTotal cost: "+str(total_cost)+" for "+str(number_of_nodes),"nodes with tot idle="+str(tot_idle)
+            print("\nTotal cost: "+str(total_cost)+" for "+str(number_of_nodes),"nodes with tot idle="+str(tot_idle))
         else:
-            print "\nTotal cost: "+str(total_cost)+" for "+str(number_of_nodes),"nodes"
+            print("\nTotal cost: "+str(total_cost)+" for "+str(number_of_nodes),"nodes")
         m1 = 0.
         m2 = 0.
         m3 = 0.
@@ -1380,20 +1380,20 @@ def printResult( ):
           m2 = float(mS2)/float(nS2)
         if nS3>0:
           m3 = float(mS3)/float(nS3)
-        print "\n(#,<>)","S1:("+str(nS1)+","+str(round(m1,2))+")","S2:("+str(nS2)+","+str(round(m2,2))+")","S3:("+str(nS3)+","+str(round(m3,2))+")"
-        print "\n\t"+str(total_cost)+"\t"+str(G.node[number_of_nodes-1]["EFT"])+"\t("+str(nS1)+","+str(round(m1,2))+")\t("+str(nS2)+","+str(round(m2,2))+")\t("+str(nS3)+","+str(round(m3,2))+")"
+        print("\n(#,<>)","S1:("+str(nS1)+","+str(round(m1,2))+")","S2:("+str(nS2)+","+str(round(m2,2))+")","S3:("+str(nS3)+","+str(round(m3,2))+")")
+        print("\n\t"+str(total_cost)+"\t"+str(G.nodes[number_of_nodes-1]["EFT"])+"\t("+str(nS1)+","+str(round(m1,2))+")\t("+str(nS2)+","+str(round(m2,2))+")\t("+str(nS3)+","+str(round(m3,2))+")")
     else:
-        print "**** No instances found ****"
+        print("**** No instances found ****")
 
         sum_time1 = 0
         for u in G.nodes():
-            sum_time1 += G.node[u]["time1"]
+            sum_time1 += G.nodes[u]["time1"]
         total_cost = sum_time1*prices[0]
 
 
 def getNonInstanceNodes(   ):
     nonp = []
-    for j in xrange(0,number_of_nodes):
+    for j in range(0,number_of_nodes):
        nonp.append(0)
     for inst in instances :
           if len(inst)>0:
@@ -1428,7 +1428,7 @@ def main(argv):
         sys.exit("\nERROR - Missing option -f or --file.\n")
     verbose = options.verbose
 
-    print "Open file '",dag_file,"'"
+    print("Open file '",dag_file,"'")
 
     f = open(dag_file, 'r')
 
@@ -1449,18 +1449,18 @@ def main(argv):
             node1 = int(node_arr[2])
             if not G.has_node(node0) :
               G.add_node( node0 )
-              G.node[node0]["order"] = node0
-              G.node[node0]["name"] = "t"+str(node0)
-              G.node[node0]["time1"] = 0
-              G.node[node0]["time2"] = 0
-              G.node[node0]["time3"] = 0
+              G.nodes[node0]["order"] = node0
+              G.nodes[node0]["name"] = "t"+str(node0)
+              G.nodes[node0]["time1"] = 0
+              G.nodes[node0]["time2"] = 0
+              G.nodes[node0]["time3"] = 0
             if not G.has_node(node1) :
               G.add_node( node1 )
-              G.node[node1]['order'] = node1
-              G.node[node1]["name"] = "t"+str(node1)
-              G.node[node1]["time1"] = 0
-              G.node[node1]["time2"] = 0
-              G.node[node1]["time3"] = 0
+              G.nodes[node1]['order'] = node1
+              G.nodes[node1]["name"] = "t"+str(node1)
+              G.nodes[node1]["time1"] = 0
+              G.nodes[node1]["time2"] = 0
+              G.nodes[node1]["time3"] = 0
             wstr = line_arr[2].strip(' ')
             wstr = wstr.rstrip(';')
             wstr = wstr.rstrip(']')
@@ -1482,48 +1482,48 @@ def main(argv):
         t += 1
         tstr = "time"+str(t)
         perf_arr = line.split(',')
-        print tstr,perf_arr
-        for inode in xrange(0,number_of_nodes):
-           G.node[inode][tstr] = int(perf_arr[inode])
+        print(tstr,perf_arr)
+        for inode in range(0,number_of_nodes):
+           G.nodes[inode][tstr] = int(perf_arr[inode])
     f.close
 
     # two reasons for adding entry node
     # a) no entry node present
     # b) current entry node has non-zero performance
     inlist = list( G.in_degree())
-    print inlist
+    print(inlist)
     num_zero = 0
     for j in inlist :
       if j[1] == 0 :
         num_zero += 1
-    if num_zero>1 or (num_zero == 1 and G.node[0]["time1"]>0 ):
+    if num_zero>1 or (num_zero == 1 and G.nodes[0]["time1"]>0 ):
         if num_zero>1:
-            print "Add entry node to graph; dag file has no entry node"
+            print("Add entry node to graph; dag file has no entry node")
         else:
-            print "Add entry node to graph; dag file has entry node with non-zero performance"
+            print("Add entry node to graph; dag file has entry node with non-zero performance")
         G1=nx.DiGraph()       
         for u in G.nodes():
             unum   = u+1
             uname  = "t"+str(unum)
             uorder = unum
             G1.add_node(unum)
-            G1.node[unum]["order"] = uorder
-            G1.node[unum]["name"] = uname
-            G1.node[unum]["time1"] = G.node[u]["time1"]
-            G1.node[unum]["time2"] = G.node[u]["time2"]
-            G1.node[unum]["time3"] = G.node[u]["time3"]
+            G1.nodes[unum]["order"] = uorder
+            G1.nodes[unum]["name"] = uname
+            G1.nodes[unum]["time1"] = G.nodes[u]["time1"]
+            G1.nodes[unum]["time2"] = G.nodes[u]["time2"]
+            G1.nodes[unum]["time3"] = G.nodes[u]["time3"]
         for u,v in G.edges():
             G1.add_edge( u+1, v+1 )
             G1[u+1][v+1]["throughput"] = G[u][v]["throughput"]
-        print "Add entry node to graph"
+        print("Add entry node to graph")
         G1.add_node(0)
-        G1.node[0]["order"] = 0
-        G1.node[0]["name"] = "t0"
-        G1.node[0]["time1"] = 0
-        G1.node[0]["time2"] = 0
-        G1.node[0]["time3"] = 0
-        G1.node[0]["Service"] = 1
-        G1.node[0]["Instance"] = -1
+        G1.nodes[0]["order"] = 0
+        G1.nodes[0]["name"] = "t0"
+        G1.nodes[0]["time1"] = 0
+        G1.nodes[0]["time2"] = 0
+        G1.nodes[0]["time3"] = 0
+        G1.nodes[0]["Service"] = 1
+        G1.nodes[0]["Instance"] = -1
         for u in G1.nodes():
           if u != 0 and G1.in_degree( u ) == 0 :
             G1.add_edge( 0, u )
@@ -1535,26 +1535,26 @@ def main(argv):
     # a) no exit node present
     # b) current exit node has non-zero performance 
     outlist = list( G.out_degree())
-    print outlist
+    print(outlist)
     num_zero = 0
     for j in outlist :
         if j[1] == 0 :
             num_zero += 1
 
-    if num_zero>1 or (num_zero == 1 and G.node[number_of_nodes-1]["time1"]>0 ) :
+    if num_zero>1 or (num_zero == 1 and G.nodes[number_of_nodes-1]["time1"]>0 ) :
         if num_zero>1:
-            print "Add exit node to graph; dag file has no exit node"
+            print("Add exit node to graph; dag file has no exit node")
         else:
-            print "Add exit node to graph; dag file has exit node with non-zero performance"
+            print("Add exit node to graph; dag file has exit node with non-zero performance")
         exit_node = G.number_of_nodes()
         G.add_node( exit_node  )
-        G.node[exit_node]["order"] = exit_node
-        G.node[exit_node]["name"] = "t"+str(exit_node)
-        G.node[exit_node]["time1"] = 0
-        G.node[exit_node]["time2"] = 0
-        G.node[exit_node]["time3"] = 0
-        G.node[exit_node]["Service"] = 1
-        G.node[exit_node]["Instance"] = -1
+        G.nodes[exit_node]["order"] = exit_node
+        G.nodes[exit_node]["name"] = "t"+str(exit_node)
+        G.nodes[exit_node]["time1"] = 0
+        G.nodes[exit_node]["time2"] = 0
+        G.nodes[exit_node]["time3"] = 0
+        G.nodes[exit_node]["Service"] = 1
+        G.nodes[exit_node]["Instance"] = -1
         for u in G.nodes():
           if u != exit_node and G.out_degree( u ) == 0 :
             G.add_edge( u, exit_node )
@@ -1567,25 +1567,25 @@ def main(argv):
        if G.out_degree(u)>0 :
            sum_in += G.in_degree(u)
     mean_in = float(sum_in)/float(number_of_nodes-1)
-    print "Mean indegree: ",str(mean_in)
+    print("Mean indegree: ",str(mean_in))
 
     for u in G.nodes():
-      G.node[u]["EST"] = -1
-      G.node[u]["EFT"] = -1
-      G.node[u]["LST"] = -1
-      G.node[u]["LFT"] = -1
-      G.node[u]["assigned"] = 0
-      G.node[u]["Service"] = 1
-      G.node[u]["Instance"] = -1
-      G.node[u]["time"] = G.node[u]["time1"]
+      G.nodes[u]["EST"] = -1
+      G.nodes[u]["EFT"] = -1
+      G.nodes[u]["LST"] = -1
+      G.nodes[u]["LFT"] = -1
+      G.nodes[u]["assigned"] = 0
+      G.nodes[u]["Service"] = 1
+      G.nodes[u]["Instance"] = -1
+      G.nodes[u]["time"] = G.nodes[u]["time1"]
 
     #check entry node and exit node
-    if( G.node[0]["time1"]==0 and G.node[0]["time2"]==0 and G.node[0]["time3"]==0 ):
-         G.node[0]["time"]=0
-         G.node[0]["assigned"]=1
-    if( G.node[number_of_nodes-1]["time1"]==0 and G.node[number_of_nodes-1]["time2"]==0 and G.node[number_of_nodes-1]["time3"]==0 ):
-         G.node[number_of_nodes-1]["time"]=0
-         G.node[number_of_nodes-1]["assigned"]=1
+    if( G.nodes[0]["time1"]==0 and G.nodes[0]["time2"]==0 and G.nodes[0]["time3"]==0 ):
+         G.nodes[0]["time"]=0
+         G.nodes[0]["assigned"]=1
+    if( G.nodes[number_of_nodes-1]["time1"]==0 and G.nodes[number_of_nodes-1]["time2"]==0 and G.nodes[number_of_nodes-1]["time3"]==0 ):
+         G.nodes[number_of_nodes-1]["time"]=0
+         G.nodes[number_of_nodes-1]["assigned"]=1
 
     deadline = 0
 
@@ -1599,7 +1599,7 @@ def main(argv):
         line = line.rstrip('\r')
         deadline = int(line)
     f.close
-    print "deadline: ",deadline
+    print("deadline: ",deadline)
 
     prices = []
     f = open(price_file, 'r') 
@@ -1611,7 +1611,7 @@ def main(argv):
         for pr in price_arr :
           prices.append(int(pr))
     f.close
-    print "prices: ",prices
+    print("prices: ",prices)
 
     printPerformances()
 
@@ -1619,19 +1619,19 @@ def main(argv):
     sum_time2 = 0
     sum_time3 = 0
     for u in G.nodes():
-      sum_time1 += G.node[u]["time1"]
-      sum_time2 += G.node[u]["time2"]
-      sum_time3 += G.node[u]["time3"]
-    print "sum time1: ",str(sum_time1)
-    print "sum time2: ",str(sum_time2)
-    print "sum time3: ",str(sum_time3)
+      sum_time1 += G.nodes[u]["time1"]
+      sum_time2 += G.nodes[u]["time2"]
+      sum_time3 += G.nodes[u]["time3"]
+    print("sum time1: ",str(sum_time1))
+    print("sum time2: ",str(sum_time2))
+    print("sum time3: ",str(sum_time3))
 
-    G.node[0]["EST"] = 0
-    G.node[0]["EFT"] = 0 + G.node[0]["time1"]
+    G.nodes[0]["EST"] = 0
+    G.nodes[0]["EFT"] = 0 + G.nodes[0]["time1"]
     graphAssignEST( number_of_nodes-1 )
 
-    G.node[(number_of_nodes-1)]["LFT"] = deadline
-    G.node[(number_of_nodes-1)]["LST"] = deadline - G.node[(number_of_nodes-1)]["time1"]
+    G.nodes[(number_of_nodes-1)]["LFT"] = deadline
+    G.nodes[(number_of_nodes-1)]["LST"] = deadline - G.nodes[(number_of_nodes-1)]["time1"]
     graphAssignLFT( 0 )
 
     #printGraphTimes( )
@@ -1647,37 +1647,37 @@ def main(argv):
     criticalp_time2 = 0
     criticalp_time3 = 0
     tot_indegree = 0
-    for j in xrange(0,len(pcp)-1):
+    for j in range(0,len(pcp)-1):
         tot_indegree += G.in_degree(pcp[j])
-        criticali_time1 += G.node[pcp[j]]["time1"]
-        criticali_time2 += G.node[pcp[j]]["time2"]
-        criticali_time3 += G.node[pcp[j]]["time3"]
+        criticali_time1 += G.nodes[pcp[j]]["time1"]
+        criticali_time2 += G.nodes[pcp[j]]["time2"]
+        criticali_time3 += G.nodes[pcp[j]]["time3"]
         throughput = G[pcp[j]][pcp[j+1]]["throughput"]
-        criticalp_time1 += G.node[pcp[j]]["time1"] + throughput
-        criticalp_time2 += G.node[pcp[j]]["time2"] + throughput
-        criticalp_time3 += G.node[pcp[j]]["time3"] + throughput
+        criticalp_time1 += G.nodes[pcp[j]]["time1"] + throughput
+        criticalp_time2 += G.nodes[pcp[j]]["time2"] + throughput
+        criticalp_time3 += G.nodes[pcp[j]]["time3"] + throughput
 
     tot_indegree += G.in_degree(pcp[len(pcp)-1])
-    criticali_time1 += G.node[pcp[len(pcp)-1]]["time1"]
-    criticali_time2 += G.node[pcp[len(pcp)-1]]["time2"]
-    criticali_time3 += G.node[pcp[len(pcp)-1]]["time3"]
-    criticalp_time1 += G.node[pcp[len(pcp)-1]]["time1"]
-    criticalp_time2 += G.node[pcp[len(pcp)-1]]["time2"]
-    criticalp_time3 += G.node[pcp[len(pcp)-1]]["time3"]
+    criticali_time1 += G.nodes[pcp[len(pcp)-1]]["time1"]
+    criticali_time2 += G.nodes[pcp[len(pcp)-1]]["time2"]
+    criticali_time3 += G.nodes[pcp[len(pcp)-1]]["time3"]
+    criticalp_time1 += G.nodes[pcp[len(pcp)-1]]["time1"]
+    criticalp_time2 += G.nodes[pcp[len(pcp)-1]]["time2"]
+    criticalp_time3 += G.nodes[pcp[len(pcp)-1]]["time3"]
     
     if options.perc>0 :
       deadline = int(100.*float(criticalp_time1)/float(options.perc))
-      print "new deadline: ",deadline
+      print("new deadline: ",deadline)
 
-    G.node[0]["EST"] = 0
-    G.node[0]["EFT"] = 0 + G.node[0]["time1"]
+    G.nodes[0]["EST"] = 0
+    G.nodes[0]["EFT"] = 0 + G.nodes[0]["time1"]
     graphAssignEST( number_of_nodes-1 )
 
-    G.node[(number_of_nodes-1)]["LFT"] = deadline
-    G.node[(number_of_nodes-1)]["LST"] = deadline - G.node[(number_of_nodes-1)]["time1"]
+    G.nodes[(number_of_nodes-1)]["LFT"] = deadline
+    G.nodes[(number_of_nodes-1)]["LST"] = deadline - G.nodes[(number_of_nodes-1)]["time1"]
     graphAssignLFT( 0 )
 
-    print "\nStart situation"
+    print("\nStart situation")
     printGraphTimes( )
 
     critper1 = 100.0*float(criticalp_time1)/float(deadline)
@@ -1687,21 +1687,21 @@ def main(argv):
     critreduc2 = 100.0*float(criticali_time2)/float(deadline)
     critreduc3 = 100.0*float(criticali_time3)/float(deadline)
     mean_indegree = float(tot_indegree)/float(len(pcp))
-    print "critical path: ",pcp," mean_indegree:"+str(round(mean_indegree,2))
-    print "criticalp_time(S1)="+str(criticalp_time1)+" is "+str(round(critper1,2))+"% of deadline("+str(deadline)+")"
-    print "criticalp_time(S2)="+str(criticalp_time2)+" is "+str(round(critper2,2))+"% of deadline("+str(deadline)+")"
-    print "criticalp_time(S3)="+str(criticalp_time3)+" is "+str(round(critper3,2))+"% of deadline("+str(deadline)+")"
-    print "criticali_time(S1)="+str(criticali_time1)+" is "+str(round(critreduc1,2))+"% of deadline("+str(deadline)+")"
-    print "criticali_time(S2)="+str(criticali_time2)+" is "+str(round(critreduc2,2))+"% of deadline("+str(deadline)+")"
-    print "criticali_time(S3)="+str(criticali_time3)+" is "+str(round(critreduc3,2))+"% of deadline("+str(deadline)+")"
+    print("critical path: ",pcp," mean_indegree:"+str(round(mean_indegree,2)))
+    print("criticalp_time(S1)="+str(criticalp_time1)+" is "+str(round(critper1,2))+"% of deadline("+str(deadline)+")")
+    print("criticalp_time(S2)="+str(criticalp_time2)+" is "+str(round(critper2,2))+"% of deadline("+str(deadline)+")")
+    print("criticalp_time(S3)="+str(criticalp_time3)+" is "+str(round(critper3,2))+"% of deadline("+str(deadline)+")")
+    print("criticali_time(S1)="+str(criticali_time1)+" is "+str(round(critreduc1,2))+"% of deadline("+str(deadline)+")")
+    print("criticali_time(S2)="+str(criticali_time2)+" is "+str(round(critreduc2,2))+"% of deadline("+str(deadline)+")")
+    print("criticali_time(S3)="+str(criticali_time3)+" is "+str(round(critreduc3,2))+"% of deadline("+str(deadline)+")")
 
-    start_str = "start configuartion: cost="+str(sum_time1*prices[0])+"  EFT(exit)="+str(G.node[(number_of_nodes-1)]["EFT"])
+    start_str = "start configuartion: cost="+str(sum_time1*prices[0])+"  EFT(exit)="+str(G.nodes[(number_of_nodes-1)]["EFT"])
     critical_str = str(deadline)+"\t"+str(round(critper1,2))+"("+str(round(critreduc1,2))+")%"
     critical_str += "\t"+str(round(critper2,2))+"("+str(round(critreduc2,2))+")%"
     critical_str += "\t"+str(round(critper3,2))+"("+str(round(critreduc3,2))+")%"
 
     assignParents( number_of_nodes-1 )
-    print "\nEnd situation"
+    print("\nEnd situation")
     printGraphTimes( )
   
     # entry and exit node not part of PCP, so
@@ -1713,20 +1713,20 @@ def main(argv):
     # check PCP end situation
 
     retVal = checkGraphTimes()
-    print "checkGraphTimes: retVal="+str(retVal)
+    print("checkGraphTimes: retVal="+str(retVal))
     
-    print "\nFinal situation"
+    print("\nFinal situation")
 
     printGraphTimes()
     printResult()
     
-    print "\n"+start_str
+    print("\n"+start_str)
     if retVal == -1 :
-        print "\n**** Invalid final configuration ****"
+        print("\n**** Invalid final configuration ****")
     else:
         #printResult()
-        print "final configuration:",critical_str
-        print "final configuration: cost="+str(total_cost)+"  EFT(exit)="+str(G.node[(number_of_nodes-1)]["EFT"])
+        print("final configuration:",critical_str)
+        print("final configuration: cost="+str(total_cost)+"  EFT(exit)="+str(G.nodes[(number_of_nodes-1)]["EFT"]))
 #############################
 # The program starts here...
 #############################
