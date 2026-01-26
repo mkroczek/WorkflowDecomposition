@@ -28,9 +28,16 @@ number_of_nodes = 0
 step = 0
 deadline = 0
 instances = []
-n_service1_inst = 0
-n_service2_inst = 0
-n_service3_inst = 0
+# OLD-IMPL
+# n_service1_inst = 0
+# n_service2_inst = 0
+# n_service3_inst = 0
+# NEW-IMPL
+NUM_SERVICES = 3
+SERVICE_RANGE = range(1, NUM_SERVICES+1)
+n_services_inst = {i: 0 for i in SERVICE_RANGE}
+
+
 verbose = 0
 prices = []
 tot_idle  = 0
@@ -315,17 +322,21 @@ def graphCalcEFT( d ):
     ceft = maxest
 
     G.nodes[d]["EST"] = ceft
-    if nservice == 0 :
-        ceft += G.nodes[d]["time1"]
-    elif nservice == 1 :
-        ceft += G.nodes[d]["time1"]
-    elif nservice == 2 :
-        ceft += G.nodes[d]["time2"]
-    elif nservice == 3 :
-        ceft += G.nodes[d]["time3"]
-    else:
-        ceft += G.nodes[d]["time1"]
-       
+    # OLD-IMPL
+    # if nservice == 0 :
+    #     ceft += G.nodes[d]["time1"]
+    # elif nservice == 1 :
+    #     ceft += G.nodes[d]["time1"]
+    # elif nservice == 2 :
+    #     ceft += G.nodes[d]["time2"]
+    # elif nservice == 3 :
+    #     ceft += G.nodes[d]["time3"]
+    # else:
+    #     ceft += G.nodes[d]["time1"]
+    # NEW-IMPL
+    time_key = f"time{nservice}" if nservice in SERVICE_RANGE else "time1"
+    ceft += G.nodes[d][time_key]
+
     G.nodes[d]["EFT"] = ceft
 
     if verbose>1:
@@ -404,16 +415,20 @@ def graphCalcLST( d ):
     # node with no children has LFT equals deadline
     clft = minlft
     G.nodes[d]["LFT"] = clft
-    if nservice == 0 :
-        clft -= G.nodes[d]["time1"]
-    elif nservice == 1 :
-        clft -= G.nodes[d]["time1"]
-    elif nservice == 2 :
-        clft -= G.nodes[d]["time2"]
-    elif nservice == 3 :
-        clft -= G.nodes[d]["time3"]
-    else:
-        clft -= G.nodes[d]["time1"]
+    # OLD-IMPL
+    # if nservice == 0 :
+    #     clft -= G.nodes[d]["time1"]
+    # elif nservice == 1 :
+    #     clft -= G.nodes[d]["time1"]
+    # elif nservice == 2 :
+    #     clft -= G.nodes[d]["time2"]
+    # elif nservice == 3 :
+    #     clft -= G.nodes[d]["time3"]
+    # else:
+    #     clft -= G.nodes[d]["time1"]
+    # NEW-IMPL
+    time_key = f"time{nservice}" if nservice in SERVICE_RANGE else "time1"
+    clft -= G.nodes[d][time_key]
 
     G.nodes[d]["LST"] = clft
 
@@ -439,12 +454,16 @@ def printGraphTimes():
     trow = "perf     "
     for n in range(0,number_of_nodes):
         vm = G.nodes[n]["Service"]
-        if vm == 3:
-            trow += str(G.nodes[n]["time3"])
-        elif vm == 2:
-            trow += str(G.nodes[n]["time2"])
-        else:
-            trow += str(G.nodes[n]["time1"])
+        # OLD-IMPL
+        # if vm == 3:
+        #     trow += str(G.nodes[n]["time3"])
+        # elif vm == 2:
+        #     trow += str(G.nodes[n]["time2"])
+        # else:
+        #     trow += str(G.nodes[n]["time1"])
+        # NEW-IMPL
+        time_key = f"time{vm}" if vm in SERVICE_RANGE else "time1"
+        trow += str(G.nodes[n][time_key])
         trow += "  "
     print(trow)
 
@@ -493,24 +512,33 @@ def printPerformances():
         trow += "  "
     print(trow)
 
-    trow = "VM1 "
-    for n in range(0,number_of_nodes):
-        trow += str( G.nodes[n]["time1"] )
-        trow += "  "
-    print(trow)
+    # OLD-IMPL
+    # trow = "VM1 "
+    # for n in range(0,number_of_nodes):
+    #     trow += str( G.nodes[n]["time1"] )
+    #     trow += "  "
+    # print(trow)
 
-    trow = "VM2 "
-    for n in range(0,number_of_nodes):
-        trow += str( G.nodes[n]["time2"] )
-        trow += "  "
-    print(trow)
+    # trow = "VM2 "
+    # for n in range(0,number_of_nodes):
+    #     trow += str( G.nodes[n]["time2"] )
+    #     trow += "  "
+    # print(trow)
 
-    trow = "VM3 "
-    for n in range(0,number_of_nodes):
-        trow += str( G.nodes[n]["time3"] )
-        trow += "  "
+    # trow = "VM3 "
+    # for n in range(0,number_of_nodes):
+    #     trow += str( G.nodes[n]["time3"] )
+    #     trow += "  "
 
-    print(trow+"\n")
+    # print(trow+"\n")
+    # NEW-IMPL
+    for i in SERVICE_RANGE:
+        trow = f"VM{i} "
+        for n in range(0,number_of_nodes):
+            trow += str( G.nodes[n][f"time{i}"] )
+            trow += "  "
+        print(trow)
+    print("\n")
 
 
 def assignParents( d ):
@@ -622,7 +650,10 @@ def getCriticalPath( d ):
     
 
 def assignPath( p ):
-    global G,instances,n_service1_inst,n_service2_inst,n_service3_inst
+    # OLD-IMPL
+    # global G,instances,n_service1_inst,n_service2_inst,n_service3_inst
+    # NEW-IMPL
+    global G,instances,n_services_inst
 
     if len(p) == 0 :  
         print("Zero path len: no assignment possible")
@@ -647,12 +678,15 @@ def assignPath( p ):
     
     if p_cas>0:
        p_time = getInstanceTime( p_cas, p )
-       if p_cas == 1 :
-           p_cost = p_time*prices[0]
-       elif p_cas == 2 :
-           p_cost = p_time*prices[1]
-       elif p_cas == 3 :
-           p_cost = p_time*prices[2]
+       # OLD-IMPL
+       # if p_cas == 1 :
+       #  p_cost = p_time*prices[0]
+       # elif p_cas == 2 :
+       #   p_cost = p_time*prices[1]
+       # elif p_cas == 3 :
+       #   p_cost = p_time*prices[2]
+       # NEW-IMPL
+       p_cost = p_time*prices[p_cas-1]
 
     best_inst = -1
     best_inst_cas = -1
@@ -664,12 +698,16 @@ def assignPath( p ):
             inst_cas = G.nodes[instances[i][0]]["Service"]
             inst_time = getInstanceTime( inst_cas, instances[i] )
             inst_cost = -1
-            if inst_cas == 1 :
-                inst_cost = inst_time*prices[0]
-            elif inst_cas == 2 :
-                inst_cost = inst_time*prices[1]
-            elif inst_cas == 3 :
-                inst_cost = inst_time*prices[2]
+            # OLD-IMPL
+            # if inst_cas == 1 :
+            #     inst_cost = inst_time*prices[0]
+            # elif inst_cas == 2 :
+            #     inst_cost = inst_time*prices[1]
+            # elif inst_cas == 3 :
+            #     inst_cost = inst_time*prices[2]
+            # NEW-IMPL
+            inst_cost = inst_time*prices[inst_cas-1]
+            
             new_inst = []
             if G.nodes[p[0]]["EST"]>=G.nodes[instances[i][inst_len-1]]["EFT"]:
                 for j in range(0,inst_len):
@@ -686,12 +724,16 @@ def assignPath( p ):
             if prop_cas>0:
                 new_inst_time = getInstanceTime( prop_cas, new_inst )
                 new_inst_cost = -1
-                if prop_cas == 1 :
-                    new_inst_cost = new_inst_time*prices[0]
-                elif prop_cas == 2 :
-                    new_inst_cost = new_inst_time*prices[1]
-                elif prop_cas == 3 :
-                    new_inst_cost = new_inst_time*prices[2]
+                # OLD-IMPL
+                # if prop_cas == 1 :
+                #     new_inst_cost = new_inst_time*prices[0]
+                # elif prop_cas == 2 :
+                #     new_inst_cost = new_inst_time*prices[1]
+                # elif prop_cas == 3 :
+                #     new_inst_cost = new_inst_time*prices[2]
+                # NEW-IMPL
+                new_inst_cost = new_inst_time*prices[prop_cas-1]
+                
                 if p_cas == -1:
                     if verbose>0 :
                         print("check extended instance",new_inst,"with prop_cas="+str(prop_cas))
@@ -758,12 +800,15 @@ def assignPath( p ):
             G.nodes[j]["Service"]  = best_inst_cas
             G.nodes[j]["Instance"] = best_inst_num
             G.nodes[j]["assigned"] = 1
-            if best_inst_cas == 1 :
-                G.nodes[j]["time"] = G.nodes[j]["time1"]
-            elif best_inst_cas == 2 :
-                G.nodes[j]["time"] = G.nodes[j]["time2"]    
-            elif best_inst_cas == 3 :
-                G.nodes[j]["time"] = G.nodes[j]["time3"]
+            # OLD-IMPL
+            # if best_inst_cas == 1 :
+            #     G.nodes[j]["time"] = G.nodes[j]["time1"]
+            # elif best_inst_cas == 2 :
+            #     G.nodes[j]["time"] = G.nodes[j]["time2"]    
+            # elif best_inst_cas == 3 :
+            #     G.nodes[j]["time"] = G.nodes[j]["time3"]
+            # NEW-IMPL
+            G.nodes[j]["time"] = G.nodes[j][f"time{best_inst_cas}"]
 
         est = old_inst_est
         # adjust EST
@@ -792,25 +837,33 @@ def assignPath( p ):
         for i in p :
             new_instance.append( i )
         instances.append( new_instance )
-        if p_cas == 1:
-            n_service1_inst += 1 
-            inst_num = n_service1_inst
-        if p_cas == 2:
-            n_service2_inst += 1 
-            inst_num = n_service2_inst
-        if p_cas == 3:
-            n_service3_inst += 1 
-            inst_num = n_service3_inst    
+        # OLD-IMPL
+        # if p_cas == 1:
+        #     n_service1_inst += 1 
+        #     inst_num = n_service1_inst
+        # if p_cas == 2:
+        #     n_service2_inst += 1 
+        #     inst_num = n_service2_inst
+        # if p_cas == 3:
+        #     n_service3_inst += 1
+        #     inst_num = n_service3_inst
+        # NEW-IMPL
+        n_services_inst[p_cas] += 1
+        inst_num = n_services_inst[p_cas]
+
         for j in p:
             G.nodes[j]["Service"]  = p_cas
             G.nodes[j]["Instance"] = inst_num
             G.nodes[j]["assigned"] = 1
-            if p_cas == 1 :
-                G.nodes[j]["time"] = G.nodes[j]["time1"]
-            elif p_cas == 2 :
-                G.nodes[j]["time"] = G.nodes[j]["time2"]    
-            elif p_cas == 3 :
-                G.nodes[j]["time"] = G.nodes[j]["time3"]
+            # OLD-IMPL
+            # if p_cas == 1 :
+            #     G.nodes[j]["time"] = G.nodes[j]["time1"]
+            # elif p_cas == 2 :
+            #     G.nodes[j]["time"] = G.nodes[j]["time2"]    
+            # elif p_cas == 3 :
+            #     G.nodes[j]["time"] = G.nodes[j]["time3"]
+            # NEW-IMPL
+            G.nodes[j]["time"] = G.nodes[j][f"time{p_cas}"]
 
         #for j in p:
         #   print G.nodes[j]["name"],": assigned="+str(G.nodes[j]["assigned"]),"Service="+str(G.nodes[j]["Service"]),"Instance="+str(G.nodes[j]["Instance"]),"time="+str(G.nodes[j]["time"]),"EST="+str(G.nodes[j]["EST"]),"EFT="+str(G.nodes[j]["EFT"]),"LST="+str(G.nodes[j]["LST"]),"LFT="+str(G.nodes[j]["LFT"])
@@ -884,20 +937,28 @@ def getCheapestAssignment( p ) :
 
     new_best_cas  = 0
     new_best_cost = 0
-    if checkClusterLimits( 1, p ):
-        new_best_cas = 1
-        new_instance_time = getInstanceTime( 1, p )
-        new_best_cost = new_instance_time*prices[0]
+    new_instance_time = 0 # NEW-IMPL seems to be missing in the original implementation (ERROR in line 964)
+    # OLD-IMPL
+    # if checkClusterLimits( 1, p ):
+    #     new_best_cas = 1
+    #     new_instance_time = getInstanceTime( 1, p )
+    #     new_best_cost = new_instance_time*prices[0]
     
-    if checkClusterLimits( 2, p ):
-        new_best_cas = 2
-        new_instance_time = getInstanceTime( 2, p )
-        new_best_cost = new_instance_time*prices[1]
+    # if checkClusterLimits( 2, p ):
+    #     new_best_cas = 2
+    #     new_instance_time = getInstanceTime( 2, p )
+    #     new_best_cost = new_instance_time*prices[1]
 
-    if checkClusterLimits( 3, p ): 
-        new_best_cas = 3
-        new_instance_time = getInstanceTime( 3, p )
-        new_best_cost = new_instance_time*prices[2]
+    # if checkClusterLimits( 3, p ): 
+    #     new_best_cas = 3
+    #     new_instance_time = getInstanceTime( 3, p )
+    #     new_best_cost = new_instance_time*prices[2]
+    # NEW-IMPL
+    for i in SERVICE_RANGE:
+        if checkClusterLimits( i, p ): 
+            new_best_cas = i
+            new_instance_time = getInstanceTime( i, p )
+            new_best_cost = new_instance_time*prices[i-1]
 
     if new_best_cas>0 :
         if verbose>0 :
@@ -1007,14 +1068,18 @@ def checkClusterLimits( l, p ) :
     for i in range(0,len(p)) :
 
         pi_time = 0
-        if l==1 :
-            pi_time = G.nodes[p[i]]["time1"]
-        elif l==2 :
-            pi_time = G.nodes[p[i]]["time2"]
-        elif l==3 :
-            pi_time = G.nodes[p[i]]["time3"]
-        else:
-            pi_time = G.nodes[p[i]]["time1"]
+        # OLD-IMPL
+        # if l==1 :
+        #     pi_time = G.nodes[p[i]]["time1"]
+        # elif l==2 :
+        #     pi_time = G.nodes[p[i]]["time2"]
+        # elif l==3 :
+        #     pi_time = G.nodes[p[i]]["time3"]
+        # else:
+        #     pi_time = G.nodes[p[i]]["time1"]
+        # NEW-IMPL
+        time_key = f"time{l}" if l in SERVICE_RANGE else "time1"
+        pi_time = G.nodes[p[i]][time_key]
 
         incr_inst_time += pi_time
         
@@ -1046,14 +1111,18 @@ def checkClusterLimits( l, p ) :
                 print(" No")
                             
         pi_time = 0
-        if l==1 :
-            pi_time = G.nodes[p[i]]["time1"]
-        elif l==2 :
-            pi_time = G.nodes[p[i]]["time2"]
-        elif l==3 :
-            pi_time = G.nodes[p[i]]["time3"]
-        else:
-            pi_time = G.nodes[p[i]]["time1"]
+        # OLD-IMPL
+        # if l==1 :
+        #     pi_time = G.nodes[p[i]]["time1"]
+        # elif l==2 :
+        #     pi_time = G.nodes[p[i]]["time2"]
+        # elif l==3 :
+        #     pi_time = G.nodes[p[i]]["time3"]
+        # else:
+        #     pi_time = G.nodes[p[i]]["time1"]
+        # NEW-IMPL
+        time_key = f"time{l}" if l in SERVICE_RANGE else "time1"
+        pi_time = G.nodes[p[i]][time_key]
 
         incr_inst_time += pi_time
  
@@ -1075,14 +1144,18 @@ def checkClusterLimits( l, p ) :
                 print(" No")
 
         pi_time = 0
-        if l==1 :
-          pi_time = G.nodes[p[j]]["time1"]
-        elif l==2 :
-          pi_time = G.nodes[p[j]]["time2"]
-        elif l==3 :
-          pi_time = G.nodes[p[j]]["time3"]
-        else:
-          pi_time = G.nodes[p[j]]["time1"]
+        # OLD-IMPL
+        # if l==1 :
+        #   pi_time = G.nodes[p[j]]["time1"]
+        # elif l==2 :
+        #   pi_time = G.nodes[p[j]]["time2"]
+        # elif l==3 :
+        #   pi_time = G.nodes[p[j]]["time3"]
+        # else:
+        #   pi_time = G.nodes[p[j]]["time1"]
+        # NEW-IMPL
+        time_key = f"time{l}" if l in SERVICE_RANGE else "time1"
+        pi_time = G.nodes[p[j]][time_key]
 
         incr_inst_time += pi_time
 
@@ -1095,14 +1168,20 @@ def getInstanceTime( c, p ):
     if len(p)>0 :
         inst_time = 0
         for i in p :
-           if c == 1 :                    
-               inst_time +=  G.nodes[i]["time1"]
-           elif c == 2 :
-               inst_time +=  G.nodes[i]["time2"]
-           elif c == 3 :
-               inst_time +=  G.nodes[i]["time3"]
-           else:
-               inst_time +=  deadline
+        # OLD-IMPL
+        #    if c == 1 :                    
+        #        inst_time +=  G.nodes[i]["time1"]
+        #    elif c == 2 :
+        #        inst_time +=  G.nodes[i]["time2"]
+        #    elif c == 3 :
+        #        inst_time +=  G.nodes[i]["time3"]
+        #    else:
+        #        inst_time +=  deadline
+        # NEW-IMPL
+            if c in SERVICE_RANGE:
+                inst_time +=  G.nodes[i][f"time{c}"]
+            else:
+                inst_time +=  deadline
                      
     return inst_time
 
@@ -1124,22 +1203,35 @@ def getInstanceNumber( p ):
 
 
 def adjustInstanceAttributes( ):
-    global G, instances, n_service1_inst,n_service2_inst,n_service3_inst
-    n_service1_inst = 0
-    n_service2_inst = 0
-    n_service3_inst = 0
+    # OLD-IMPL
+    # global G, instances, n_service1_inst,n_service2_inst,n_service3_inst
+    # NEW-IMPL
+    global G, instances, n_services_inst
+    
+    # OLD-IMPL
+    # n_service1_inst = 0
+    # n_service2_inst = 0
+    # n_service3_inst = 0
+    # NEW-IMPL
+    n_services_inst = {i: 0 for i in SERVICE_RANGE}
+
     for i in range(0,len(instances)):
       service = G.nodes[instances[i][0]]["Service"]
       inst_num = -1
-      if service == 1:
-         n_service1_inst += 1 
-         inst_num = n_service1_inst
-      if service == 2:
-         n_service2_inst += 1 
-         inst_num = n_service2_inst
-      if service == 3:
-         n_service3_inst += 1 
-         inst_num = n_service3_inst
+      # OLD-IMPL
+      # if service == 1:
+      #    n_service1_inst += 1 
+      #    inst_num = n_service1_inst
+      # if service == 2:
+      #    n_service2_inst += 1 
+      #    inst_num = n_service2_inst
+      # if service == 3:
+      #    n_service3_inst += 1 
+      #    inst_num = n_service3_inst
+      # NEW-IMPL
+      n_services_inst[service] += 1 
+      inst_num = n_services_inst[service]
+
       for j in range(0,len(instances[i])):
           G.nodes[instances[i][j]]["Instance"] = inst_num      
 
@@ -1232,14 +1324,18 @@ def updateNode( n ):
 
     G.nodes[n]["EST"] = maxest
     G.nodes[n]["EFT"] = maxest
-    if nservice == 1 :                    
-        G.nodes[n]["EFT"] +=  G.nodes[n]["time1"]
-    elif nservice == 2 :
-        G.nodes[n]["EFT"] += G.nodes[n]["time2"]
-    elif nservice == 3 :
-        G.nodes[n]["EFT"] += G.nodes[n]["time3"]
-    else:
-        G.nodes[n]["EFT"] +=  G.nodes[n]["time1"]
+    # OLD-IMPL
+    # if nservice == 1 :                    
+    #     G.nodes[n]["EFT"] +=  G.nodes[n]["time1"]
+    # elif nservice == 2 :
+    #     G.nodes[n]["EFT"] += G.nodes[n]["time2"]
+    # elif nservice == 3 :
+    #     G.nodes[n]["EFT"] += G.nodes[n]["time3"]
+    # else:
+    #     G.nodes[n]["EFT"] +=  G.nodes[n]["time1"]
+    # NEW-IMPL
+    time_key = f"time{nservice}" if nservice in SERVICE_RANGE else "time1"
+    G.nodes[n]["EFT"] +=  G.nodes[n][time_key]
 
 
     successors = []
@@ -1269,14 +1365,19 @@ def updateNode( n ):
 
     G.nodes[n]["LFT"] = minlft
     G.nodes[n]["LST"] = minlft
-    if nservice == 1 :                    
-        G.nodes[n]["LST"] -=  G.nodes[n]["time1"]
-    elif nservice == 2 :
-        G.nodes[n]["LST"] -= G.nodes[n]["time2"]
-    elif nservice == 3 :
-        G.nodes[n]["LST"] -= G.nodes[n]["time3"]
-    else:
-        G.nodes[n]["LST"] -=  G.nodes[n]["time1"]
+    # OLD-IMPL
+    # if nservice == 1 :                    
+    #     G.nodes[n]["LST"] -=  G.nodes[n]["time1"]
+    # elif nservice == 2 :
+    #     G.nodes[n]["LST"] -= G.nodes[n]["time2"]
+    # elif nservice == 3 :
+    #     G.nodes[n]["LST"] -= G.nodes[n]["time3"]
+    # else:
+    #     G.nodes[n]["LST"] -=  G.nodes[n]["time1"]
+    # NEW-IMPL
+    time_key = f"time{nservice}" if nservice in SERVICE_RANGE else "time1"
+    G.nodes[n]["LST"] -=  G.nodes[n][time_key]
+
 
 total_cost = 0
                    
@@ -1291,12 +1392,17 @@ def printResult( ):
 
     total_cost = 0
     # calculate cost
-    nS3 = 0
-    nS2 = 0
-    nS1 = 0
-    mS3 = 0
-    mS2 = 0
-    mS1 = 0
+    # OLD-IMPL
+    # nS3 = 0
+    # nS2 = 0
+    # nS1 = 0
+    # mS3 = 0
+    # mS2 = 0
+    # mS1 = 0
+    # NEW-IMPL
+    nS = {i: 0 for i in SERVICE_RANGE}
+    mS = {i: 0 for i in SERVICE_RANGE}
+
     if len(instances)>0 :
         if verbose>0 :
             rstr += "\n    Start time    Stop time    Duration    Inst cost    Assigned tasks"
@@ -1320,18 +1426,24 @@ def printResult( ):
             #icunits = int(math.ceil( fcunits ))
             icunits = duration
             cost = 0
-            if serv == 1 :
-                cost = icunits*prices[0]
-                nS1 += 1
-                mS1 += len(inst)
-            elif serv == 2:
-                cost = icunits*prices[1]
-                nS2 += 1
-                mS2 += len(inst)
-            elif serv == 3:
-                cost = icunits*prices[2]
-                nS3 += 1
-                mS3 += len(inst)
+            # OLD-IMPL
+            # if serv == 1 :
+            #     cost = icunits*prices[0]
+            #     nS1 += 1
+            #     mS1 += len(inst)
+            # elif serv == 2:
+            #     cost = icunits*prices[1]
+            #     nS2 += 1
+            #     mS2 += len(inst)
+            # elif serv == 3:
+            #     cost = icunits*prices[2]
+            #     nS3 += 1
+            #     mS3 += len(inst)
+            # NEW-IMPL
+            if serv in SERVICE_RANGE:
+                cost = icunits*prices[serv-1]
+                nS[serv] += 1
+                mS[serv] += len(inst)
 
             total_cost += cost
             rstr += "    "+str(cost)
@@ -1368,23 +1480,45 @@ def printResult( ):
             print("\nTotal cost: "+str(total_cost)+" for "+str(number_of_nodes),"nodes with tot idle="+str(tot_idle))
         else:
             print("\nTotal cost: "+str(total_cost)+" for "+str(number_of_nodes),"nodes")
-        m1 = 0.
-        m2 = 0.
-        m3 = 0.
+        # OLD-IMPL
+        # m1 = 0.
+        # m2 = 0.
+        # m3 = 0.
+        # NEW-IMPL
+        m = {i: 0. for i in SERVICE_RANGE}
+
+        # OLD-IMPL
+        # if extra_cost>0:
+        #   nS1 += tot_non_inst
+        #   mS1 += tot_non_inst
+        # NEW-IMPL
         if extra_cost>0:
-          nS1 += tot_non_inst
-          mS1 += tot_non_inst
-        if nS1>0:
-          m1 = float(mS1)/float(nS1)
-        if nS2>0 :
-          m2 = float(mS2)/float(nS2)
-        if nS3>0:
-          m3 = float(mS3)/float(nS3)
-        print("\n(#,<>)","S1:("+str(nS1)+","+str(round(m1,2))+")","S2:("+str(nS2)+","+str(round(m2,2))+")","S3:("+str(nS3)+","+str(round(m3,2))+")")
-        print("\n\t"+str(total_cost)+"\t"+str(G.nodes[number_of_nodes-1]["EFT"])+"\t("+str(nS1)+","+str(round(m1,2))+")\t("+str(nS2)+","+str(round(m2,2))+")\t("+str(nS3)+","+str(round(m3,2))+")")
+          nS[1] += tot_non_inst
+          mS[1] += tot_non_inst
+        
+        # OLD-IMPL
+        # if nS1>0:
+        #   m1 = float(mS1)/float(nS1)
+        # if nS2>0 :
+        #   m2 = float(mS2)/float(nS2)
+        # if nS3>0:
+        #   m3 = float(mS3)/float(nS3)
+        # print("\n(#,<>)","S1:("+str(nS1)+","+str(round(m1,2))+")","S2:("+str(nS2)+","+str(round(m2,2))+")","S3:("+str(nS3)+","+str(round(m3,2))+")")
+        # print("\n\t"+str(total_cost)+"\t"+str(G.nodes[number_of_nodes-1]["EFT"])+"\t("+str(nS1)+","+str(round(m1,2))+")\t("+str(nS2)+","+str(round(m2,2))+")\t("+str(nS3)+","+str(round(m3,2))+")")
+        # NEW-IMPL
+        for nS_key, nS_value in nS.items():
+            if nS_value > 0:
+                m[nS_key] = float(mS[nS_key])/float(nS[nS_key]) 
+        print("\n(#,<>)", end=" ")
+        for i in SERVICE_RANGE:
+            print(f"S{i}:({nS[i]},{round(m[i], 2)})", end=" ")
+        print(f'\n\t{total_cost}\t{G.nodes[number_of_nodes-1]["EFT"]}', end=" ")
+        for i in SERVICE_RANGE:
+            print(f"\t{nS[i]},{round(m[i], 2)})", end=" ")
     else:
         print("**** No instances found ****")
 
+        # NEW-IMPL this seems not to be used, so I did not update that (now we use sum_times[] but they are not defined in the rest of this method, and it is not a global variable)
         sum_time1 = 0
         for u in G.nodes():
             sum_time1 += G.nodes[u]["time1"]
@@ -1451,16 +1585,26 @@ def main(argv):
               G.add_node( node0 )
               G.nodes[node0]["order"] = node0
               G.nodes[node0]["name"] = "t"+str(node0)
-              G.nodes[node0]["time1"] = 0
-              G.nodes[node0]["time2"] = 0
-              G.nodes[node0]["time3"] = 0
+            #   OLD-IMPL
+            #   G.nodes[node0]["time1"] = 0
+            #   G.nodes[node0]["time2"] = 0
+            #   G.nodes[node0]["time3"] = 0
+            #   NEW-IMPL
+              for i in SERVICE_RANGE:               
+                G.nodes[node0][f"time{i}"] = 0
+
             if not G.has_node(node1) :
               G.add_node( node1 )
               G.nodes[node1]['order'] = node1
               G.nodes[node1]["name"] = "t"+str(node1)
-              G.nodes[node1]["time1"] = 0
-              G.nodes[node1]["time2"] = 0
-              G.nodes[node1]["time3"] = 0
+            #   OLD-IMPL
+            #   G.nodes[node1]["time1"] = 0
+            #   G.nodes[node1]["time2"] = 0
+            #   G.nodes[node1]["time3"] = 0
+            #   NEW-IMPL
+              for i in SERVICE_RANGE:               
+                G.nodes[node1][f"time{i}"] = 0
+
             wstr = line_arr[2].strip(' ')
             wstr = wstr.rstrip(';')
             wstr = wstr.rstrip(']')
@@ -1484,7 +1628,10 @@ def main(argv):
         perf_arr = line.split(',')
         print(tstr,perf_arr)
         for inode in range(0,number_of_nodes):
-           G.nodes[inode][tstr] = int(perf_arr[inode])
+            # OLD-IMPL
+            # G.nodes[inode][tstr] = int(perf_arr[inode])
+            # NEW-IMPL
+            G.nodes[inode][tstr] = float(perf_arr[inode])
     f.close
 
     # two reasons for adding entry node
@@ -1509,9 +1656,14 @@ def main(argv):
             G1.add_node(unum)
             G1.nodes[unum]["order"] = uorder
             G1.nodes[unum]["name"] = uname
-            G1.nodes[unum]["time1"] = G.nodes[u]["time1"]
-            G1.nodes[unum]["time2"] = G.nodes[u]["time2"]
-            G1.nodes[unum]["time3"] = G.nodes[u]["time3"]
+            # OLD-IMPL
+            # G1.nodes[unum]["time1"] = G.nodes[u]["time1"]
+            # G1.nodes[unum]["time2"] = G.nodes[u]["time2"]
+            # G1.nodes[unum]["time3"] = G.nodes[u]["time3"]
+            # NEW-IMPL
+            for i in SERVICE_RANGE:
+                G1.nodes[unum][f"time{i}"] = G.nodes[u][f"time{i}"]
+                
         for u,v in G.edges():
             G1.add_edge( u+1, v+1 )
             G1[u+1][v+1]["throughput"] = G[u][v]["throughput"]
@@ -1519,9 +1671,14 @@ def main(argv):
         G1.add_node(0)
         G1.nodes[0]["order"] = 0
         G1.nodes[0]["name"] = "t0"
-        G1.nodes[0]["time1"] = 0
-        G1.nodes[0]["time2"] = 0
-        G1.nodes[0]["time3"] = 0
+        # OLD-IMPL
+        # G1.nodes[0]["time1"] = 0
+        # G1.nodes[0]["time2"] = 0
+        # G1.nodes[0]["time3"] = 0
+        # NEW-IMPL
+        for i in SERVICE_RANGE:
+            G1.nodes[0][f"time{i}"] = 0
+
         G1.nodes[0]["Service"] = 1
         G1.nodes[0]["Instance"] = -1
         for u in G1.nodes():
@@ -1550,9 +1707,14 @@ def main(argv):
         G.add_node( exit_node  )
         G.nodes[exit_node]["order"] = exit_node
         G.nodes[exit_node]["name"] = "t"+str(exit_node)
-        G.nodes[exit_node]["time1"] = 0
-        G.nodes[exit_node]["time2"] = 0
-        G.nodes[exit_node]["time3"] = 0
+        # OLD-IMPL
+        # G.nodes[exit_node]["time1"] = 0
+        # G.nodes[exit_node]["time2"] = 0
+        # G.nodes[exit_node]["time3"] = 0
+        # NEW-IMPL
+        for i in SERVICE_RANGE:
+          G.nodes[exit_node][f"time{i}"] = 0
+
         G.nodes[exit_node]["Service"] = 1
         G.nodes[exit_node]["Instance"] = -1
         for u in G.nodes():
@@ -1580,12 +1742,20 @@ def main(argv):
       G.nodes[u]["time"] = G.nodes[u]["time1"]
 
     #check entry node and exit node
-    if( G.nodes[0]["time1"]==0 and G.nodes[0]["time2"]==0 and G.nodes[0]["time3"]==0 ):
-         G.nodes[0]["time"]=0
-         G.nodes[0]["assigned"]=1
-    if( G.nodes[number_of_nodes-1]["time1"]==0 and G.nodes[number_of_nodes-1]["time2"]==0 and G.nodes[number_of_nodes-1]["time3"]==0 ):
-         G.nodes[number_of_nodes-1]["time"]=0
-         G.nodes[number_of_nodes-1]["assigned"]=1
+    # OLD-IMPL
+    # if( G.nodes[0]["time1"]==0 and G.nodes[0]["time2"]==0 and G.nodes[0]["time3"]==0 ):
+    #      G.nodes[0]["time"]=0
+    #      G.nodes[0]["assigned"]=1
+    # if( G.nodes[number_of_nodes-1]["time1"]==0 and G.nodes[number_of_nodes-1]["time2"]==0 and G.nodes[number_of_nodes-1]["time3"]==0 ):
+    #      G.nodes[number_of_nodes-1]["time"]=0
+    #      G.nodes[number_of_nodes-1]["assigned"]=1
+    # NEW-IMPL
+    if all(G.nodes[0][f"time{i}"] == 0 for i in SERVICE_RANGE):
+      G.nodes[0]["time"]=0
+      G.nodes[0]["assigned"]=1
+    if all(G.nodes[number_of_nodes - 1][f"time{i}"] == 0 for i in SERVICE_RANGE):
+      G.nodes[number_of_nodes-1]["time"]=0
+      G.nodes[number_of_nodes-1]["assigned"]=1
 
     deadline = 0
 
@@ -1597,7 +1767,10 @@ def main(argv):
         line = line.strip(' ')
         line = line.rstrip('\n')
         line = line.rstrip('\r')
-        deadline = int(line)
+        # OLD-IMPL
+        # deadline = int(line)
+        # NEW-IMPL
+        deadline = float(line)
     f.close
     print("deadline: ",deadline)
 
@@ -1609,22 +1782,36 @@ def main(argv):
         line = line.rstrip('\r')
         price_arr = line.split(',')
         for pr in price_arr :
-          prices.append(int(pr))
+            # OLD-IMPL
+            # prices.append(int(pr))
+            # NEW-IMPL
+            prices.append(float(pr))
     f.close
     print("prices: ",prices)
 
     printPerformances()
 
-    sum_time1 = 0
-    sum_time2 = 0
-    sum_time3 = 0
+    # OLD-IMPL
+    # sum_time1 = 0
+    # sum_time2 = 0
+    # sum_time3 = 0
+    # NEW-IMPL
+    sum_times = {i:0 for i in SERVICE_RANGE}
     for u in G.nodes():
-      sum_time1 += G.nodes[u]["time1"]
-      sum_time2 += G.nodes[u]["time2"]
-      sum_time3 += G.nodes[u]["time3"]
-    print("sum time1: ",str(sum_time1))
-    print("sum time2: ",str(sum_time2))
-    print("sum time3: ",str(sum_time3))
+    #   OLD-IMPL
+    #   sum_time1 += G.nodes[u]["time1"]
+    #   sum_time2 += G.nodes[u]["time2"]
+    #   sum_time3 += G.nodes[u]["time3"]
+    #   NEW-IMPL
+      for service_id in SERVICE_RANGE:
+        sum_times[service_id] += G.nodes[u][f"time{service_id}"]
+    # OLD-IMPL
+    # print("sum time1: ",str(sum_time1))
+    # print("sum time2: ",str(sum_time2))
+    # print("sum time3: ",str(sum_time3))
+    # NEW-IMPL
+    for service_id in SERVICE_RANGE:
+      print(f"sum time{service_id}: {sum_times[service_id]}")
 
     G.nodes[0]["EST"] = 0
     G.nodes[0]["EFT"] = 0 + G.nodes[0]["time1"]
@@ -1640,33 +1827,54 @@ def main(argv):
     if len(pcp) ==  0:
         sys.exit("\nERROR **** No critical path found ****\n")
 
-    criticali_time1 = 0
-    criticali_time2 = 0
-    criticali_time3 = 0
-    criticalp_time1 = 0
-    criticalp_time2 = 0
-    criticalp_time3 = 0
+    # OLD-IMPL
+    # criticali_time1 = 0
+    # criticali_time2 = 0
+    # criticali_time3 = 0
+    # criticalp_time1 = 0
+    # criticalp_time2 = 0
+    # criticalp_time3 = 0
+    # NEW-IMPL
+    criticali_times = {i: 0 for i in SERVICE_RANGE}
+    criticalp_times = {i: 0 for i in SERVICE_RANGE}
     tot_indegree = 0
     for j in range(0,len(pcp)-1):
         tot_indegree += G.in_degree(pcp[j])
-        criticali_time1 += G.nodes[pcp[j]]["time1"]
-        criticali_time2 += G.nodes[pcp[j]]["time2"]
-        criticali_time3 += G.nodes[pcp[j]]["time3"]
+        # OLD-IMPL
+        # criticali_time1 += G.nodes[pcp[j]]["time1"]
+        # criticali_time2 += G.nodes[pcp[j]]["time2"]
+        # criticali_time3 += G.nodes[pcp[j]]["time3"]
+        # NEW-IMPL
+        for service_id in SERVICE_RANGE:
+            criticali_times[service_id] += G.nodes[pcp[j]][f"time{service_id}"]
         throughput = G[pcp[j]][pcp[j+1]]["throughput"]
-        criticalp_time1 += G.nodes[pcp[j]]["time1"] + throughput
-        criticalp_time2 += G.nodes[pcp[j]]["time2"] + throughput
-        criticalp_time3 += G.nodes[pcp[j]]["time3"] + throughput
+        # OLD-IMPL
+        # criticalp_time1 += G.nodes[pcp[j]]["time1"] + throughput
+        # criticalp_time2 += G.nodes[pcp[j]]["time2"] + throughput
+        # criticalp_time3 += G.nodes[pcp[j]]["time3"] + throughput
+        # NEW-IMPL
+        for service_id in SERVICE_RANGE:
+            criticalp_times[service_id] += G.nodes[pcp[j]][f"time{service_id}"] + throughput
 
     tot_indegree += G.in_degree(pcp[len(pcp)-1])
-    criticali_time1 += G.nodes[pcp[len(pcp)-1]]["time1"]
-    criticali_time2 += G.nodes[pcp[len(pcp)-1]]["time2"]
-    criticali_time3 += G.nodes[pcp[len(pcp)-1]]["time3"]
-    criticalp_time1 += G.nodes[pcp[len(pcp)-1]]["time1"]
-    criticalp_time2 += G.nodes[pcp[len(pcp)-1]]["time2"]
-    criticalp_time3 += G.nodes[pcp[len(pcp)-1]]["time3"]
+    # OLD-IMPL
+    # criticali_time1 += G.nodes[pcp[len(pcp)-1]]["time1"]
+    # criticali_time2 += G.nodes[pcp[len(pcp)-1]]["time2"]
+    # criticali_time3 += G.nodes[pcp[len(pcp)-1]]["time3"]
+    # criticalp_time1 += G.nodes[pcp[len(pcp)-1]]["time1"]
+    # criticalp_time2 += G.nodes[pcp[len(pcp)-1]]["time2"]
+    # criticalp_time3 += G.nodes[pcp[len(pcp)-1]]["time3"]
+    # NEW-IMPL
+    for i in SERVICE_RANGE:
+        value = G.nodes[pcp[len(pcp)-1]][f"time{i}"]
+        criticali_times[i] += value
+        criticalp_times[i] += value
     
     if options.perc>0 :
-      deadline = int(100.*float(criticalp_time1)/float(options.perc))
+      # OLD-IMPL
+      # deadline = int(100.*float(criticalp_time1)/float(options.perc))
+      # NEW-IMPL
+      deadline = 100.*float(criticalp_times[1])/float(options.perc)
       print("new deadline: ",deadline)
 
     G.nodes[0]["EST"] = 0
@@ -1680,25 +1888,48 @@ def main(argv):
     print("\nStart situation")
     printGraphTimes( )
 
-    critper1 = 100.0*float(criticalp_time1)/float(deadline)
-    critper2 = 100.0*float(criticalp_time2)/float(deadline)
-    critper3 = 100.0*float(criticalp_time3)/float(deadline)
-    critreduc1 = 100.0*float(criticali_time1)/float(deadline)
-    critreduc2 = 100.0*float(criticali_time2)/float(deadline)
-    critreduc3 = 100.0*float(criticali_time3)/float(deadline)
+    # OLD-IMPL
+    # critper1 = 100.0*float(criticalp_time1)/float(deadline)
+    # critper2 = 100.0*float(criticalp_time2)/float(deadline)
+    # critper3 = 100.0*float(criticalp_time3)/float(deadline)
+    # critreduc1 = 100.0*float(criticali_time1)/float(deadline)
+    # critreduc2 = 100.0*float(criticali_time2)/float(deadline)
+    # critreduc3 = 100.0*float(criticali_time3)/float(deadline)
+    # NEW-IMPL
+    critpers = {i: 0. for i in SERVICE_RANGE}
+    critreducs = {i: 0. for i in SERVICE_RANGE}
+    for i in SERVICE_RANGE:
+        critpers[i] = 100.0*float(criticalp_times[i])/float(deadline)
+        critreducs[i] = 100.0*float(criticali_times[i])/float(deadline)
+
     mean_indegree = float(tot_indegree)/float(len(pcp))
     print("critical path: ",pcp," mean_indegree:"+str(round(mean_indegree,2)))
-    print("criticalp_time(S1)="+str(criticalp_time1)+" is "+str(round(critper1,2))+"% of deadline("+str(deadline)+")")
-    print("criticalp_time(S2)="+str(criticalp_time2)+" is "+str(round(critper2,2))+"% of deadline("+str(deadline)+")")
-    print("criticalp_time(S3)="+str(criticalp_time3)+" is "+str(round(critper3,2))+"% of deadline("+str(deadline)+")")
-    print("criticali_time(S1)="+str(criticali_time1)+" is "+str(round(critreduc1,2))+"% of deadline("+str(deadline)+")")
-    print("criticali_time(S2)="+str(criticali_time2)+" is "+str(round(critreduc2,2))+"% of deadline("+str(deadline)+")")
-    print("criticali_time(S3)="+str(criticali_time3)+" is "+str(round(critreduc3,2))+"% of deadline("+str(deadline)+")")
+    # OLD-IMPL
+    # print("criticalp_time(S1)="+str(criticalp_time1)+" is "+str(round(critper1,2))+"% of deadline("+str(deadline)+")")
+    # print("criticalp_time(S2)="+str(criticalp_time2)+" is "+str(round(critper2,2))+"% of deadline("+str(deadline)+")")
+    # print("criticalp_time(S3)="+str(criticalp_time3)+" is "+str(round(critper3,2))+"% of deadline("+str(deadline)+")")
+    # print("criticali_time(S1)="+str(criticali_time1)+" is "+str(round(critreduc1,2))+"% of deadline("+str(deadline)+")")
+    # print("criticali_time(S2)="+str(criticali_time2)+" is "+str(round(critreduc2,2))+"% of deadline("+str(deadline)+")")
+    # print("criticali_time(S3)="+str(criticali_time3)+" is "+str(round(critreduc3,2))+"% of deadline("+str(deadline)+")")
+    # NEW-IMPL
+    for i in SERVICE_RANGE:
+        print(f"criticalp_time(S{i})={criticalp_times[i]} is {round(critpers[i],2)}% of deadline({deadline})")
+    for i in SERVICE_RANGE:
+        print(f"criticali_time(S{i})={criticali_times[i]} is {round(critreducs[i],2)}% of deadline({deadline})")
 
-    start_str = "start configuartion: cost="+str(sum_time1*prices[0])+"  EFT(exit)="+str(G.nodes[(number_of_nodes-1)]["EFT"])
-    critical_str = str(deadline)+"\t"+str(round(critper1,2))+"("+str(round(critreduc1,2))+")%"
-    critical_str += "\t"+str(round(critper2,2))+"("+str(round(critreduc2,2))+")%"
-    critical_str += "\t"+str(round(critper3,2))+"("+str(round(critreduc3,2))+")%"
+    # OLD-IMPL
+    # start_str = "start configuartion: cost="+str(sum_time1*prices[0])+"  EFT(exit)="+str(G.nodes[(number_of_nodes-1)]["EFT"])
+    # NEW-IMPL
+    start_str = "start configuartion: cost="+str(sum_times[1]*prices[0])+"  EFT(exit)="+str(G.nodes[(number_of_nodes-1)]["EFT"])
+
+    # OLD-IMPL
+    # critical_str = str(deadline)+"\t"+str(round(critper1,2))+"("+str(round(critreduc1,2))+")%"
+    # critical_str += "\t"+str(round(critper2,2))+"("+str(round(critreduc2,2))+")%"
+    # critical_str += "\t"+str(round(critper3,2))+"("+str(round(critreduc3,2))+")%"
+    # NEW-IMPL
+    critical_str = str(deadline)
+    for i in SERVICE_RANGE:
+        critical_str += f"\t{round(critpers[i],2)} {round(critreducs[i],2)}%"
 
     assignParents( number_of_nodes-1 )
     print("\nEnd situation")
