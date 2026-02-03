@@ -1,0 +1,54 @@
+{
+  "machines": [
+    {
+      "name": "c6g.large",
+      "memory": 0,
+      "cpu": {
+        "speed": 1095,
+        "count": 2
+      },
+      "price": 1.8085,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "t3a.medium",
+      "memory": 0,
+      "cpu": {
+        "speed": 1402,
+        "count": 2
+      },
+      "price": 1.0000,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "c8g.large",
+      "memory": 0,
+      "cpu": {
+        "speed": 1928,
+        "count": 2
+      },
+      "price": 2.1213,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "r7a.large",
+      "memory": 0,
+      "cpu": {
+        "speed": 2876,
+        "count": 2
+      },
+      "price": 4.0465,
+      "memory_cost_multiplier": 0.0
+    },
+    {
+      "name": "m8a.large",
+      "memory": 0,
+      "cpu": {
+        "speed": 3821,
+        "count": 2
+      },
+      "price": 3.2372,
+      "memory_cost_multiplier": 0.0
+    }
+  ]
+}
