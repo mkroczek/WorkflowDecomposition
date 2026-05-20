@@ -3,6 +3,7 @@ import os
 import time
 import glob
 from dataclasses import dataclass, field
+from collections import defaultdict
 
 sys.setrecursionlimit(50000)
 
@@ -22,11 +23,6 @@ from QHyper.constraint import Operator
 
 from decomposition.qhyper.algorithm import WorkflowDecompositionQHyperAdapter
 from decomposition.qhyper.problem import WorkflowSchedulingOneHotEnhanced
-from decomposition.qhyper.solver import (
-    WorkflowSchedulingSolverDecorator,
-    DecomposedWorkflowSchedulingSolver,
-)
-
 
 WORKFLOW_DIR = os.path.join(SCRIPT_DIR, "../../montage_selected")
 MACHINES = os.path.join(SCRIPT_DIR, "../resources/machines/ec2_machines_normalized.json")
@@ -116,10 +112,54 @@ class TimedGurobi(Gurobi):
         return SolverResult(recarray, {}, [])
 
 
-def deadline_as_cpv(workflow):
-    """Source: https://github.com/mkroczek/WorkflowDecomposition/blob/master/experiments/mss_influence/experiment.ipynb"""
-    mean_times = workflow.time_matrix.mean(axis=1).to_dict()
-    return int(max(sum(mean_times[t] for t in p) for p in workflow.paths))
+def count_paths_dp(workflow):
+    """Count root-to-leaf paths"""
+    G = workflow.wf_instance.workflow
+    count = defaultdict(int)
+    for root in [n for n in G if G.in_degree(n) == 0]:
+        count[root] = 1
+    for node in nx.topological_sort(G):
+        for succ in G.successors(node):
+            count[succ] += count[node]
+    leaves = [n for n in G if G.out_degree(n) == 0]
+    return sum(count[leaf] for leaf in leaves)
+
+
+def critical_path_time(workflow):
+    """Longest path using mean machine times"""
+    G = workflow.wf_instance.workflow
+    mean_t = workflow.time_matrix.mean(axis=1).to_dict()
+    dist = defaultdict(float)
+    for node in nx.topological_sort(G):
+        for succ in G.successors(node):
+            dist[succ] = max(dist[succ], dist[node] + mean_t.get(node, 0))
+    leaves = [n for n in G if G.out_degree(n) == 0]
+    return max(dist[leaf] + mean_t.get(leaf, 0) for leaf in leaves)
+
+
+def schedule_makespan(workflow, assignment):
+    """Makespan via topological"""
+    G = workflow.wf_instance.workflow
+    completion = {}
+    for node in nx.topological_sort(G):
+        exec_time = (
+            workflow.time_matrix.loc[node, assignment[node]]
+            if node in assignment else 0
+        )
+        earliest_start = max(
+            (completion[pred] for pred in G.predecessors(node)), default=0
+        )
+        completion[node] = earliest_start + exec_time
+    leaves = [n for n in G if G.out_degree(n) == 0]
+    return max(completion[leaf] for leaf in leaves) if leaves else 0.0
+
+
+def decode_solver_result(solver_result: SolverResult, problem) -> dict:
+    """Decode SolverResult recarray to {task: machine}"""
+    best = solver_result.probabilities[0]
+    raw  = {var: int(best[var]) for var in best.dtype.names if var != "probability"}
+    return problem.decode_solution(raw)
+
 
 def run_spwd(workflow, max_sub_fraction, time_limit_per_sub_s):
     n_tasks = len(workflow.tasks)
@@ -137,7 +177,7 @@ def run_spwd(workflow, max_sub_fraction, time_limit_per_sub_s):
     out["spwd_max_tasks_subworkflow"] = max(
         (len(list(wf.tasks)) for wf in division.workflows), default=0
     )
-    out["spwd_max_paths_subworkflow"] = max((len(wf.paths) for wf in division.workflows), default=0)
+    out["spwd_max_paths_subworkflow"] = max((count_paths_dp(wf) for wf in division.workflows), default=0)
 
     # Phase 2: sub-problem construction
     t_problem_encoding_qhyper = time.time()
@@ -147,29 +187,51 @@ def run_spwd(workflow, max_sub_fraction, time_limit_per_sub_s):
         return {**out, "spwd_status": "problem_init_error", "spwd_error": str(e)[:120]}
     out["spwd_problem_encoding_qhyper_sec"] = round(time.time() - t_problem_encoding_qhyper, 5)
 
-    sub_solvers = [
-        WorkflowSchedulingSolverDecorator(TimedGurobi(p, time_limit_s=time_limit_per_sub_s))
-        for p in problems
+    timed_gurobi_list = [
+        TimedGurobi(p, time_limit_s=time_limit_per_sub_s) for p in problems
     ]
-    solver = DecomposedWorkflowSchedulingSolver(sub_solvers, division)
-
     # Phase 3: solve each sub-problem
     t_total_solver = time.time()
-    try:
-        schedule = solver.solve()
-    except Exception as e:
-        return {**out, "spwd_status": "solver error", "spwd_error": str(e)[:120]}
+    all_assignments = []
+    for i, tg in enumerate(timed_gurobi_list):
+        try:
+            solver_result = tg.solve()
+        except Exception as e:
+            return {**out, "spwd_status": "solver error", "spwd_error": str(e)[:120]}
+        all_assignments.append(decode_solver_result(solver_result, tg.problem))
+
     out["spwd_total_solver_sec"] = round(time.time() - t_total_solver, 5)
-    out["spwd_gurobi_model_build_for_all_sum_sec"] = round(sum(s.solver.last_model_build_s or 0 for s in solver.solvers), 5)
-    out["spwd_gurobi_runtime_for_all_sum_sec"] = round(sum(s.solver.last_runtime_s or 0 for s in solver.solvers), 5)
+    out["spwd_gurobi_model_build_for_all_sum_sec"] = round(sum(g.last_model_build_s or 0 for g in timed_gurobi_list), 5)
+    out["spwd_gurobi_runtime_for_all_sum_sec"] = round(sum(g.last_runtime_s or 0 for g in timed_gurobi_list), 5)
     out["spwd_total_time_sec"] = round(
         out["spwd_spization_sec"]
         + out["spwd_problem_encoding_qhyper_sec"]
         + out["spwd_total_solver_sec"], 3
     )
-    out["spwd_status"] = "solved" if schedule.time <= workflow.deadline else "deadline_exceeded"
-    out["spwd_cost"] = round(schedule.cost, 5)
-    out["spwd_makespan"] = round(schedule.time, 5)
+
+    # Merge: pick faster machine for tasks shared across sub-workflows
+    complete_wf = division.complete_workflow
+    merged = {}
+    for assignment in all_assignments:
+        for task, machine in assignment.items():
+            if task not in merged:
+                merged[task] = machine
+            else:
+                t1 = complete_wf.time_matrix.loc[task, merged[task]]
+                t2 = complete_wf.time_matrix.loc[task, machine]
+                if t2 < t1:
+                    merged[task] = machine
+
+    orig_wf = division.original_workflow
+    orig_assignment = {t: m for t, m in merged.items() if t in orig_wf.task_names}
+
+    # schedule_makespan replaces calculate_solution_timespan — exponential path enumeration avoided
+    makespan = schedule_makespan(orig_wf, orig_assignment)
+    cost = sum(orig_wf.cost_matrix.loc[t, m] for t, m in orig_assignment.items())
+
+    out["spwd_status"] = "solved" if makespan <= orig_wf.deadline else "deadline_exceeded"
+    out["spwd_cost"] = round(cost, 4),
+    out["spwd_makespan"] = round(makespan, 2),
     return out
 
 
@@ -182,15 +244,16 @@ def run_gurobi(workflow, time_limit_s):
         row["gurobi_problem_encoding_qhyper_sec"] = round(time.time() - t_problem_encoding_qhyper, 5)
 
         timed_gurobi = TimedGurobi(problem=problem, time_limit_s=time_limit_s)
-        ref_solver = WorkflowSchedulingSolverDecorator(timed_gurobi)
 
-        # Phase 2+3: model build + gpm.optimize (timed inside TimedGurobi.solve)
+        # Phase 2+3: model build + gpm.optimize
         t_gurobi_solver_solve = time.time()
-        schedule = ref_solver.solve()  # returns WorkflowSchedule with .cost and .time
+        solver_result = timed_gurobi.solve()
         row["gurobi_total_time_sec"] = round(time.time() - t_gurobi_solver_solve, 5)
 
-        row["gurobi_cost"]    = round(schedule.cost, 5)
-        row["gurobi_makespan"] = round(schedule.time, 5)
+        machine_assignment = decode_solver_result(solver_result, problem)
+
+        row["gurobi_cost"] = round(sum(workflow.cost_matrix.loc[t, m] for t, m in machine_assignment.items()), 5)
+        row["gurobi_makespan"] = round(schedule_makespan(workflow, machine_assignment), 5)
 
         row["gurobi_model_build_sec"] = timed_gurobi.last_model_build_s
         row["gurobi_runtime_sec"]     = timed_gurobi.last_runtime_s
@@ -230,7 +293,7 @@ def main():
         t0 = time.time()
         try:
             workflow = Workflow(tasks_file, MACHINES, 100000)
-            deadline = int(deadline_as_cpv(workflow) * DEADLINE_MULTIPLIER)
+            deadline = int(critical_path_time(workflow) * DEADLINE_MULTIPLIER)
             workflow.deadline = deadline
         except Exception as e:
             row["error"] = str(e)[:120]
@@ -241,7 +304,7 @@ def main():
 
         n_tasks    = len(workflow.tasks)
         n_machines = len(workflow.machines)
-        n_paths    = len(workflow.paths)
+        n_paths    = count_paths_dp(workflow)
         row.update({
             "n_tasks": n_tasks,
             "n_machines": n_machines,
@@ -261,7 +324,7 @@ def main():
         print(
             f"        spization={row.get('spwd_spization_sec')}s"
             f"  problem_encoding={row.get('spwd_problem_encoding_qhyper_sec')}s"
-            f"  model_build={row.get('spwd_model_build_for_all_sum_sec')}s"
+            f"  model_build={row.get('spwd_gurobi_model_build_for_all_sum_sec')}s"
             f"  gurobi={row.get('spwd_gurobi_runtime_for_all_sum_sec')}s"
             f"  total={row.get('spwd_total_time_sec')}s"
         )
@@ -283,7 +346,7 @@ def main():
         # Comparison
         g_cost, s_cost = row.get("gurobi_cost"), row.get("spwd_cost")
         if g_cost and s_cost:
-            row["cost_ratio"] = round(s_cost / g_cost, 4)
+            row["cost_ratio"] = round(s_cost[0] / g_cost, 4)
 
         gurobi_solved = (
             row.get("gurobi_status") in ("optimal", "time_limit")
