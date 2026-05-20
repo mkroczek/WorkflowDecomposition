@@ -1,0 +1,315 @@
+import sys
+import os
+import time
+import glob
+from dataclasses import dataclass, field
+
+sys.setrecursionlimit(50000)
+
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../.."))
+sys.path.insert(0, PROJECT_ROOT)
+
+import networkx as nx
+import numpy as np
+import pandas as pd
+import gurobipy as gp
+
+from QHyper.problems.workflow_scheduling import Workflow
+from QHyper.solvers.classical.gurobi.gurobi import Gurobi, polynomial_to_gurobi
+from QHyper.solvers.base import SolverResult
+from QHyper.constraint import Operator
+
+from decomposition.qhyper.algorithm import WorkflowDecompositionQHyperAdapter
+from decomposition.qhyper.problem import WorkflowSchedulingOneHotEnhanced
+from decomposition.qhyper.solver import (
+    WorkflowSchedulingSolverDecorator,
+    DecomposedWorkflowSchedulingSolver,
+)
+
+
+WORKFLOW_DIR = os.path.join(SCRIPT_DIR, "../../montage_selected")
+MACHINES = os.path.join(SCRIPT_DIR, "../resources/machines/ec2_machines_normalized.json")
+RESULTS_CSV = os.path.join(SCRIPT_DIR, "results.csv")
+DEADLINE_MULTIPLIER = 1
+MAX_SUB_FRACTION = 0.01
+SPWD_SUB_TIME_LIMIT_S = 1 * 60 * 60
+GUROBI_TIME_LIMIT_S   = 6 * 60 * 60
+
+_GUROBI_STATUS = {
+    2: "optimal", 
+    3: "infeasible",
+    4: "inf_or_unbd",
+    5: "unbounded",
+    9: "time_limit",
+    11: "interrupted",
+}
+
+@dataclass
+class TimedGurobi(Gurobi):
+    """Source: https://github.com/qc-lab/QHyper/blob/main/QHyper/solvers/classical/gurobi/gurobi.py"""
+    
+    time_limit_s: float | None = None
+
+    last_status:        str   | None = field(default=None, init=False, repr=False)
+    last_runtime_s:     float | None = field(default=None, init=False, repr=False)
+    last_model_build_s: float | None = field(default=None, init=False, repr=False)
+    last_sol_count:     int          = field(default=0,    init=False, repr=False)
+    last_mip_gap_pct:   float | None = field(default=None, init=False, repr=False)
+
+    def solve(self) -> SolverResult:
+        env = gp.Env(empty=True)
+        env.setParam("OutputFlag", 0)
+        if self.time_limit_s is not None:
+            env.setParam("TimeLimit", self.time_limit_s)
+        env.start()
+
+        gpm = gp.Model(self.model_name, env=env)
+        gpm.setParam("Threads", 8)
+        if self.mip_gap:
+            gpm.Params.MIPGap = self.mip_gap
+
+        all_vars = self.problem.objective_function.get_variables()
+        for con in self.problem.constraints:
+            all_vars |= con.get_variables()
+
+        t_build = time.time()
+        gvars = {
+            str(v): gpm.addVar(vtype=gp.GRB.BINARY, name=str(v))
+            for v in all_vars
+        }
+        gpm.setObjective(
+            polynomial_to_gurobi(gvars, self.problem.objective_function),
+            gp.GRB.MINIMIZE,
+        )
+        for i, con in enumerate(self.problem.constraints):
+            lhs = polynomial_to_gurobi(gvars, con.lhs)
+            rhs = polynomial_to_gurobi(gvars, con.rhs)
+            if con.operator == Operator.EQ:
+                gpm.addConstr(lhs == rhs, f"constr_{i}")
+            elif con.operator == Operator.LE:
+                gpm.addConstr(lhs <= rhs, f"constr_{i}")
+            elif con.operator == Operator.GE:
+                gpm.addConstr(lhs >= rhs, f"constr_{i}")
+            gpm.update()
+        self.last_model_build_s = round(time.time() - t_build, 5)
+
+        gpm.optimize()
+
+        self.last_status = _GUROBI_STATUS.get(gpm.status, f"status_{gpm.status}")
+        self.last_runtime_s = round(gpm.Runtime, 5)
+        self.last_sol_count = gpm.SolCount
+        try:
+            self.last_mip_gap_pct = round(gpm.MIPGap * 100, 2) if gpm.SolCount > 0 else None
+        except Exception:
+            self.last_mip_gap_pct = None
+
+        if gpm.SolCount == 0:
+            raise Exception(f"Gurobi found no feasible solution (status={self.last_status})")
+
+        vars_list = list(gvars.keys())
+        solution  = {v.VarName: v.X for v in gpm.getVars()}
+        recarray  = np.recarray(
+            (1,), dtype=[(var, "i4") for var in vars_list] + [("probability", "f8")]
+        )
+        recarray[0] = *(int(round(solution[var])) for var in vars_list), 1.0
+        return SolverResult(recarray, {}, [])
+
+
+def deadline_as_cpv(workflow):
+    """Source: https://github.com/mkroczek/WorkflowDecomposition/blob/master/experiments/mss_influence/experiment.ipynb"""
+    mean_times = workflow.time_matrix.mean(axis=1).to_dict()
+    return int(max(sum(mean_times[t] for t in p) for p in workflow.paths))
+
+def run_spwd(workflow, max_sub_fraction, time_limit_per_sub_s):
+    n_tasks = len(workflow.tasks)
+    max_subgraph_size = max(2, int(max_sub_fraction * n_tasks))
+    out = {"max_subgraph_size": max_subgraph_size}
+
+    # Phase 1: SPization
+    t_spization = time.time()
+    try:
+        division = WorkflowDecompositionQHyperAdapter(workflow).decompose(max_subgraph_size)
+    except Exception as e:
+        return {**out, "spwd_status": "decompose_error", "spwd_error": str(e)[:120]}
+    out["spwd_spization_sec"] = round(time.time() - t_spization, 5)
+    out["spwd_num_subworkflows"] = len(division.workflows)
+    out["spwd_max_tasks_subworkflow"] = max(
+        (len(list(wf.tasks)) for wf in division.workflows), default=0
+    )
+    out["spwd_max_paths_subworkflow"] = max((len(wf.paths) for wf in division.workflows), default=0)
+
+    # Phase 2: sub-problem construction
+    t_problem_encoding_qhyper = time.time()
+    try:
+        problems = [WorkflowSchedulingOneHotEnhanced(w) for w in division.workflows]
+    except Exception as e:
+        return {**out, "spwd_status": "problem_init_error", "spwd_error": str(e)[:120]}
+    out["spwd_problem_encoding_qhyper_sec"] = round(time.time() - t_problem_encoding_qhyper, 5)
+
+    sub_solvers = [
+        WorkflowSchedulingSolverDecorator(TimedGurobi(p, time_limit_s=time_limit_per_sub_s))
+        for p in problems
+    ]
+    solver = DecomposedWorkflowSchedulingSolver(sub_solvers, division)
+
+    # Phase 3: solve each sub-problem
+    t_total_solver = time.time()
+    try:
+        schedule = solver.solve()
+    except Exception as e:
+        return {**out, "spwd_status": "solver error", "spwd_error": str(e)[:120]}
+    out["spwd_total_solver_sec"] = round(time.time() - t_total_solver, 5)
+    out["spwd_gurobi_model_build_for_all_sum_sec"] = round(sum(s.solver.last_model_build_s or 0 for s in solver.solvers), 5)
+    out["spwd_gurobi_runtime_for_all_sum_sec"] = round(sum(s.solver.last_runtime_s or 0 for s in solver.solvers), 5)
+    out["spwd_total_time_sec"] = round(
+        out["spwd_spization_sec"]
+        + out["spwd_problem_encoding_qhyper_sec"]
+        + out["spwd_total_solver_sec"], 3
+    )
+    out["spwd_status"] = "solved" if schedule.time <= workflow.deadline else "deadline_exceeded"
+    out["spwd_cost"] = round(schedule.cost, 5)
+    out["spwd_makespan"] = round(schedule.time, 5)
+    return out
+
+
+def run_gurobi(workflow, time_limit_s):
+    row = {}
+    try:
+        # Phase 1: problem construction
+        t_problem_encoding_qhyper = time.time()
+        problem = WorkflowSchedulingOneHotEnhanced(workflow)
+        row["gurobi_problem_encoding_qhyper_sec"] = round(time.time() - t_problem_encoding_qhyper, 5)
+
+        timed_gurobi = TimedGurobi(problem=problem, time_limit_s=time_limit_s)
+        ref_solver = WorkflowSchedulingSolverDecorator(timed_gurobi)
+
+        # Phase 2+3: model build + gpm.optimize (timed inside TimedGurobi.solve)
+        t_gurobi_solver_solve = time.time()
+        schedule = ref_solver.solve()  # returns WorkflowSchedule with .cost and .time
+        row["gurobi_total_time_sec"] = round(time.time() - t_gurobi_solver_solve, 5)
+
+        row["gurobi_cost"]    = round(schedule.cost, 5)
+        row["gurobi_makespan"] = round(schedule.time, 5)
+
+        row["gurobi_model_build_sec"] = timed_gurobi.last_model_build_s
+        row["gurobi_runtime_sec"]     = timed_gurobi.last_runtime_s
+        row["gurobi_status"]        = timed_gurobi.last_status
+        row["gurobi_sol_count"]     = timed_gurobi.last_sol_count
+        row["gurobi_mip_gap_pct"]   = timed_gurobi.last_mip_gap_pct
+
+    except Exception as e:
+        return {**row, "gurobi_status": "error", "error": str(e)[:120]}
+
+    return row
+
+def append_row(row, csv_path):
+    df_row = pd.DataFrame([row])
+    write_header = not os.path.exists(csv_path)
+    df_row.to_csv(csv_path, mode="a", header=write_header, index=False)
+
+
+def main():
+    workflow_files = sorted(glob.glob(os.path.join(WORKFLOW_DIR, "*.json")))
+    if not workflow_files:
+        print(f"No .json files found in {WORKFLOW_DIR}")
+        return
+
+    print(f"Found {len(workflow_files)} workflow(s)  →  {RESULTS_CSV}")
+    print(
+        f"Config: DEADLINE_MULTIPLIER={DEADLINE_MULTIPLIER} | MAX_SUB_FRACTION={MAX_SUB_FRACTION} | "
+        f"SPWD_SUB_LIMIT={SPWD_SUB_TIME_LIMIT_S}s | GUROBI_LIMIT={GUROBI_TIME_LIMIT_S/3600:.0f}h"
+    )
+
+    for tasks_file in workflow_files:
+        label = os.path.basename(tasks_file).removesuffix(".json")
+        print(f"\n{'='*72}\n  {label}\n{'='*72}")
+
+        row = {"instance": label, "machine": MACHINES.removesuffix(".json").split("/")[-1]}
+
+        t0 = time.time()
+        try:
+            workflow = Workflow(tasks_file, MACHINES, 100000)
+            deadline = int(deadline_as_cpv(workflow) * DEADLINE_MULTIPLIER)
+            workflow.deadline = deadline
+        except Exception as e:
+            row["error"] = str(e)[:120]
+            print(f"  ERROR loading: {e}")
+            append_row(row, RESULTS_CSV)
+            continue
+        row["workflow_init_from_file_sec"] = round(time.time() - t0, 2)
+
+        n_tasks    = len(workflow.tasks)
+        n_machines = len(workflow.machines)
+        n_paths    = len(workflow.paths)
+        row.update({
+            "n_tasks": n_tasks,
+            "n_machines": n_machines,
+            "n_paths": n_paths,
+            "n_vars": n_tasks * n_machines,
+            "deadline": deadline,
+        })
+        print(f"  tasks={n_tasks}  machines={n_machines}  paths={n_paths}  deadline={deadline}")
+
+        # 1. SPWD
+        print(f"\n  [1/2] SPWD  (max_sub_fraction={MAX_SUB_FRACTION})")
+        row.update(run_spwd(workflow, MAX_SUB_FRACTION, SPWD_SUB_TIME_LIMIT_S))
+        print(
+            f"        status={row.get('spwd_status')}  cost={row.get('spwd_cost')}"
+            f"  n_subs={row.get('spwd_num_subworkflows')}"
+        )
+        print(
+            f"        spization={row.get('spwd_spization_sec')}s"
+            f"  problem_encoding={row.get('spwd_problem_encoding_qhyper_sec')}s"
+            f"  model_build={row.get('spwd_model_build_for_all_sum_sec')}s"
+            f"  gurobi={row.get('spwd_gurobi_runtime_for_all_sum_sec')}s"
+            f"  total={row.get('spwd_total_time_sec')}s"
+        )
+
+        # 2. Pure Gurobi
+        print(f"\n  [2/2] Gurobi")
+        row.update(run_gurobi(workflow, GUROBI_TIME_LIMIT_S))
+        print(
+            f"        status={row.get('gurobi_status')}  cost={row.get('gurobi_cost')}"
+            f"  gap={row.get('gurobi_mip_gap_pct')}%"
+        )
+        print(
+            f"        problem_encoding={row.get('gurobi_problem_encoding_qhyper_sec')}s"
+            f"  model_build={row.get('gurobi_model_build_sec')}s"
+            f"  gurobi={row.get('gurobi_runtime_sec')}s"
+            f"  total_solve={row.get('gurobi_total_time_sec')}s"
+        )
+
+        # Comparison
+        g_cost, s_cost = row.get("gurobi_cost"), row.get("spwd_cost")
+        if g_cost and s_cost:
+            row["cost_ratio"] = round(s_cost / g_cost, 4)
+
+        gurobi_solved = (
+            row.get("gurobi_status") in ("optimal", "time_limit")
+            and row.get("gurobi_sol_count", 0) > 0
+        )
+        spwd_solved = row.get("spwd_status") == "solved"
+
+        if not gurobi_solved and spwd_solved:
+            row["advantage"] = "SPWD enables solution"
+        elif gurobi_solved and spwd_solved:
+            if row.get("gurobi_status") == "time_limit":
+                row["advantage"] = f"SPWD vs suboptimal Gurobi (gap={row.get('gurobi_mip_gap_pct')}%)"
+            else:
+                row["advantage"] = "both optimal — cost ratio shows overhead"
+        elif gurobi_solved and not spwd_solved:
+            row["advantage"] = "Gurobi only"
+        else:
+            row["advantage"] = "neither solved"
+
+        print(f"\n  → advantage={row.get('advantage')}  cost_ratio={row.get('cost_ratio')}")
+
+        append_row(row, RESULTS_CSV)
+        print(f"  Saved to {RESULTS_CSV}")
+
+    print(f"\n{'='*72}\nDone.  Full results in {RESULTS_CSV}")
+
+
+if __name__ == "__main__":
+    main()

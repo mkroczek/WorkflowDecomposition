@@ -49,14 +49,14 @@ def label_edges(graph: nx.MultiDiGraph, label_generator) -> None:
 
 
 def reduce_parallels(graph: GraphDecorator, node, retrieve_edges):
-    edges = retrieve_edges(node)
-    if len(edges) <= 1:
-        return
-    e1, e2 = edges[:2]
-    if e1[0] != e2[0] or e1[1] != e2[1]:
-        return
-    graph.reduce_parallel(e1, e2)
-    return reduce_parallels(graph, node, retrieve_edges)
+    while True:
+        edges = retrieve_edges(node)
+        if len(edges) <= 1:
+            return
+        e1, e2 = edges[:2]
+        if e1[0] != e2[0] or e1[1] != e2[1]:
+            return
+        graph.reduce_parallel(e1, e2)
 
 
 def process_vertex(graph: GraphDecorator, node, unsatisfied_nodes: set):
