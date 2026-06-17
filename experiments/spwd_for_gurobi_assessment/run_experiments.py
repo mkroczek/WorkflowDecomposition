@@ -24,7 +24,7 @@ from QHyper.constraint import Operator
 from decomposition.qhyper.algorithm import WorkflowDecompositionQHyperAdapter
 from decomposition.qhyper.problem import WorkflowSchedulingOneHotEnhanced
 
-WORKFLOW_DIR = os.path.join(SCRIPT_DIR, "../../montage_selected")
+WORKFLOW_DIR = os.path.join(SCRIPT_DIR, "workflows")
 MACHINES = os.path.join(SCRIPT_DIR, "../resources/machines/ec2_machines_normalized.json")
 RESULTS_CSV = os.path.join(SCRIPT_DIR, "results.csv")
 DEADLINE_MULTIPLIER = 1
@@ -61,15 +61,16 @@ class TimedGurobi(Gurobi):
         env.start()
 
         gpm = gp.Model(self.model_name, env=env)
-        gpm.setParam("Threads", 8)
+        gpm.setParam("Threads", 1)
         if self.mip_gap:
             gpm.Params.MIPGap = self.mip_gap
 
+
+        t_build = time.time()
         all_vars = self.problem.objective_function.get_variables()
         for con in self.problem.constraints:
             all_vars |= con.get_variables()
 
-        t_build = time.time()
         gvars = {
             str(v): gpm.addVar(vtype=gp.GRB.BINARY, name=str(v))
             for v in all_vars
@@ -87,10 +88,13 @@ class TimedGurobi(Gurobi):
                 gpm.addConstr(lhs <= rhs, f"constr_{i}")
             elif con.operator == Operator.GE:
                 gpm.addConstr(lhs >= rhs, f"constr_{i}")
-            gpm.update()
+        gpm.update()
         self.last_model_build_s = round(time.time() - t_build, 5)
 
+        optimize_time = time.time()
         gpm.optimize()
+        self.optimize_time = round(time.time() - optimize_time, 5)
+        print("+", self.optimize_time)
 
         self.last_status = _GUROBI_STATUS.get(gpm.status, f"status_{gpm.status}")
         self.last_runtime_s = round(gpm.Runtime, 5)
@@ -183,13 +187,16 @@ def run_spwd(workflow, max_sub_fraction, time_limit_per_sub_s):
     t_problem_encoding_qhyper = time.time()
     try:
         problems = [WorkflowSchedulingOneHotEnhanced(w) for w in division.workflows]
+        print("NUM: ", len(problems))
     except Exception as e:
         return {**out, "spwd_status": "problem_init_error", "spwd_error": str(e)[:120]}
     out["spwd_problem_encoding_qhyper_sec"] = round(time.time() - t_problem_encoding_qhyper, 5)
 
+    t_timed_gurobi_subproblems_creation = time.time()
     timed_gurobi_list = [
         TimedGurobi(p, time_limit_s=time_limit_per_sub_s) for p in problems
     ]
+    out["t_timed_gurobi_subproblems_creation_sec"] = round(time.time() - t_timed_gurobi_subproblems_creation, 5)
     # Phase 3: solve each sub-problem
     t_total_solver = time.time()
     all_assignments = []
@@ -199,17 +206,14 @@ def run_spwd(workflow, max_sub_fraction, time_limit_per_sub_s):
         except Exception as e:
             return {**out, "spwd_status": "solver error", "spwd_error": str(e)[:120]}
         all_assignments.append(decode_solver_result(solver_result, tg.problem))
-
     out["spwd_total_solver_sec"] = round(time.time() - t_total_solver, 5)
-    out["spwd_gurobi_model_build_for_all_sum_sec"] = round(sum(g.last_model_build_s or 0 for g in timed_gurobi_list), 5)
-    out["spwd_gurobi_runtime_for_all_sum_sec"] = round(sum(g.last_runtime_s or 0 for g in timed_gurobi_list), 5)
-    out["spwd_total_time_sec"] = round(
-        out["spwd_spization_sec"]
-        + out["spwd_problem_encoding_qhyper_sec"]
-        + out["spwd_total_solver_sec"], 3
-    )
+    out["spwd_gurobi_model_build_for_all_sum_sec"] = round(sum(g.last_model_build_s or -1000000 for g in timed_gurobi_list), 5)
+    out["spwd_gurobi_runtime_for_all_sum_sec"] = round(sum(g.last_runtime_s or -1000000 for g in timed_gurobi_list), 5)
+    out["spwd_gurobi_optimize_sum_sec"] = round(sum(g.optimize_time or -1000000 for g in timed_gurobi_list), 5)
+
 
     # Merge: pick faster machine for tasks shared across sub-workflows
+    t_merge_time = time.time()
     complete_wf = division.complete_workflow
     merged = {}
     for assignment in all_assignments:
@@ -221,17 +225,29 @@ def run_spwd(workflow, max_sub_fraction, time_limit_per_sub_s):
                 t2 = complete_wf.time_matrix.loc[task, machine]
                 if t2 < t1:
                     merged[task] = machine
+    out["spwd_gurobi_merge_time"] = round(time.time() - t_merge_time, 5)
 
+    time_schedule = time.time()
     orig_wf = division.original_workflow
     orig_assignment = {t: m for t, m in merged.items() if t in orig_wf.task_names}
 
     # schedule_makespan replaces calculate_solution_timespan — exponential path enumeration avoided
     makespan = schedule_makespan(orig_wf, orig_assignment)
     cost = sum(orig_wf.cost_matrix.loc[t, m] for t, m in orig_assignment.items())
+    out["t_schedule_sec"] = round(time.time() - time_schedule, 5)
 
     out["spwd_status"] = "solved" if makespan <= orig_wf.deadline else "deadline_exceeded"
-    out["spwd_cost"] = round(cost, 4),
-    out["spwd_makespan"] = round(makespan, 2),
+    
+    out["spwd_total_time_sec"] = round(out["spwd_spization_sec"]
+        + out["spwd_problem_encoding_qhyper_sec"]
+        + out["t_timed_gurobi_subproblems_creation_sec"]
+        + out["spwd_total_solver_sec"]
+        + out["spwd_gurobi_merge_time"]
+        + out["t_schedule_sec"], 5
+    )
+        
+    out["spwd_cost"] = round(cost, 5)
+    out["spwd_makespan"] = round(makespan, 5)
     return out
 
 
@@ -243,20 +259,26 @@ def run_gurobi(workflow, time_limit_s):
         problem = WorkflowSchedulingOneHotEnhanced(workflow)
         row["gurobi_problem_encoding_qhyper_sec"] = round(time.time() - t_problem_encoding_qhyper, 5)
 
+        t_class_creation = time.time()
         timed_gurobi = TimedGurobi(problem=problem, time_limit_s=time_limit_s)
+        row["t_timed_gurobi_problem_creation_sec"] = round(time.time() - t_class_creation, 5)
+
 
         # Phase 2+3: model build + gpm.optimize
         t_gurobi_solver_solve = time.time()
         solver_result = timed_gurobi.solve()
         row["gurobi_total_time_sec"] = round(time.time() - t_gurobi_solver_solve, 5)
 
+        t_schedule = time.time()
         machine_assignment = decode_solver_result(solver_result, problem)
-
         row["gurobi_cost"] = round(sum(workflow.cost_matrix.loc[t, m] for t, m in machine_assignment.items()), 5)
         row["gurobi_makespan"] = round(schedule_makespan(workflow, machine_assignment), 5)
-
+        row["t_gurobi_decode_schedule_sec"] = round(time.time() - t_schedule, 5)
+        
+        
         row["gurobi_model_build_sec"] = timed_gurobi.last_model_build_s
         row["gurobi_runtime_sec"]     = timed_gurobi.last_runtime_s
+        row["optimize_sec"]     = timed_gurobi.optimize_time
         row["gurobi_status"]        = timed_gurobi.last_status
         row["gurobi_sol_count"]     = timed_gurobi.last_sol_count
         row["gurobi_mip_gap_pct"]   = timed_gurobi.last_mip_gap_pct
@@ -346,7 +368,7 @@ def main():
         # Comparison
         g_cost, s_cost = row.get("gurobi_cost"), row.get("spwd_cost")
         if g_cost and s_cost:
-            row["cost_ratio"] = round(s_cost[0] / g_cost, 4)
+            row["cost_ratio"] = round(s_cost / g_cost, 4)
 
         gurobi_solved = (
             row.get("gurobi_status") in ("optimal", "time_limit")
